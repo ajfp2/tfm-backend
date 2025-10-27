@@ -13,7 +13,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/perfil', function (Request $request) {
         return $request->user();
     });
-
+    // Route::get('/logout', function (Request $request) {
+    //     return $request->logout();
+    // });
+    Route::get('/logout', [AuthController::class, 'logout']);
     Route::apiResource('socios', SocioController::class);
 });
 
