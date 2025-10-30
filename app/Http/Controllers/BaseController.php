@@ -18,14 +18,15 @@ class BaseController extends Controller
      * @param int    $code      Código de respuesta HTTP (por defecto 200)
      * @return JsonResponse
      */
-    public function sendResponseLogin($data, $token, $message = 'Conexión exitosa', $code = 200): JsonResponse
+    public function sendResponseLogin($data, $token, $duration, $message = 'Conexión exitosa', $code = 200): JsonResponse
     {
         return response()->json([
             'status'  => 'success',
             'code'    => $code,
             'message' => $message,
             'user' => $data,
-            'token' => $token
+            'token' => $token,
+            'expires_at' => $duration
         ], $code);
     }
 

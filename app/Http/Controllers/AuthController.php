@@ -13,7 +13,8 @@ use App\Models\User;
 
 class AuthController extends BaseController
 {
-    const MI_KEY_TOKEN = 'Api-BackendTFM_2025';
+    // const MI_KEY_TOKEN = 'Api-BackendTFM_2025';
+    private $key_token = 'Api-BackendTFM_2025';
     
     public function login(Request $request): JsonResponse
     {
@@ -28,23 +29,14 @@ class AuthController extends BaseController
             return $this->sendError('Acceso denegado.', ['Su cuenta no está activa. Contacte al administrador.'], 403);
         }
 
-        $token = $user->createToken(self::MI_KEY_TOKEN)->plainTextToken;
-        $expiresAt = now()->addHour();
+        $token = $user->createToken($this->key_token)->plainTextToken;
+        $expiresAt = now()->addHours(3);
         $user->tokens()->latest()->first()->update([
             'expires_at' => $expiresAt,
         ]);
-        $user['token'] = $token;
-        $user['expires_at'] = $expiresAt->toDateTimeString();
-        return $this->sendResponseLogin($user, $token, 'Inicio de sesión exitoso.', 200);
-    }
 
-    public function logout22()
-    {
-        Auth::user()->tokens->each(function ($token) {
-            $token->forceDelete();
-        });
-        $response = [];
-        return $this->sendResponse($response, 'Logout exitoso.', 200);
+        $expires = $expiresAt->toDateTimeString();
+        return $this->sendResponseLogin($user, $token, $expires, 'Inicio de sesión exitoso.', 200);
     }
 
     public function logout(Request $request){
@@ -52,7 +44,7 @@ class AuthController extends BaseController
         // $user->tokens()->where('id', $tokenId)->delete();
         $request->user()->currentAccessToken()->delete();
         // $user->tokens()->delete();
-        return $this->sendResponse([], 'Logout exitoso.', 200);
+        return $this->sendResponse([], 'Logout exitoso desde el servidor.', 200);
         // return response()->json(
         //     [
         //         'status'=> true,
