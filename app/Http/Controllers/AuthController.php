@@ -40,17 +40,18 @@ class AuthController extends BaseController
     }
 
     public function logout(Request $request){
-        $user = Auth::user();
-        // $user->tokens()->where('id', $tokenId)->delete();
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        // $user = Auth::user();
+
+        // Revoke all tokens...
         // $user->tokens()->delete();
+
+        // Revocar token especifico
+        // $user->tokens()->where('id', $tokenId)->delete();
+
+        // Revocar token current user
+        $user->currentAccessToken()->delete();
         return $this->sendResponse([], 'Logout exitoso desde el servidor.', 200);
-        // return response()->json(
-        //     [
-        //         'status'=> true,
-        //         'message' => 'Logout exitoso'
-        //     ]
-        // , 200);
     }
 
 }

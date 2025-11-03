@@ -14,6 +14,8 @@ class BaseController extends Controller
      * Enviar respuesta de éxito.
      *
      * @param mixed  $data      Datos de la respuesta
+     * @param string $token     Token del usuario
+     * @param int $duration   Duración del token ms
      * @param string $message   Mensaje a mostrar
      * @param int    $code      Código de respuesta HTTP (por defecto 200)
      * @return JsonResponse

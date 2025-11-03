@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConfigController;
-use App\Http\Controllers\Api\SocioController;
+use App\Http\Controllers\SocioController;
+use App\Http\Controllers\UserController;
 
 // Ruta libre para login
 Route::post('/login', [AuthController::class, 'login']);
@@ -18,15 +19,12 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     
     Route::post('/logout', [AuthController::class, 'logout']);
-
     // Ruta CRUD Config
     Route::apiResource('config', ConfigController::class);
-
     // Ruta solo para configuración activa
     Route::get('/config-activa', [ConfigController::class, 'activa']);
-
-
     Route::apiResource('socios', SocioController::class);
+    Route::apiResource('users', UserController::class);
 });
 
 
