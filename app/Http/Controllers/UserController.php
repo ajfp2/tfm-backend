@@ -29,7 +29,7 @@ class UserController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        return $this->sendResponse(User::find($id), 'Usuarios obtenidos correctamente.', 200);
+        return $this->sendResponse(User::find($id), 'Usuario obtenido correctamente.', 200);
     }
 
     /**
