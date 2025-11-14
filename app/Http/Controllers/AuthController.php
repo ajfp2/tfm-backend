@@ -39,19 +39,49 @@ class AuthController extends BaseController
         return $this->sendResponseLogin($user, $token, $expires, 'Inicio de sesión exitoso.', 200);
     }
 
+    /**
+     * Refrescar token
+     */
+    public function refresh(Request $request)
+    {
+        // Elimino ek token actual
+        $request->user()->currentAccessToken()->delete();
+        
+        // Creamos nuevo token
+        $token = $request->user()->createToken('auth_token')->plainTextToken;
+        return $this->sendResponse(['access_token' => $token], 'Token actualizado.', 200);
+        // return response()->json([
+        //     'access_token' => $token,
+        //     'token_type' => 'Bearer'
+        // ], 200);
+    }
+
     public function logout(Request $request){
-        $user = $request->user();
-        // $user = Auth::user();
 
-        // Revoke all tokens...
-        // $user->tokens()->delete();
+        \Log::info('Datos recibidos LOGOUT:', $request->all());
+        try{
+            $user = $request->user();
+            // $user = Auth::user();
 
-        // Revocar token especifico
-        // $user->tokens()->where('id', $tokenId)->delete();
+            // Revoke all tokens...
+            // $user->tokens()->delete();
 
-        // Revocar token current user
-        $user->currentAccessToken()->delete();
-        return $this->sendResponse([], 'Logout exitoso desde el servidor.', 200);
+            // Revocar token especifico
+            // $user->tokens()->where('id', $tokenId)->delete();
+
+            // Revocar token current user
+            $user->currentAccessToken()->delete();
+            return $this->sendResponse([], 'Logout exitoso desde el servidor.', 200);
+        } catch (\Exception $e) {
+             \Log::error('Error al logout: ' . $e->getMessage());
+            return $this->sendError(
+                'Error Logout',
+                ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
+                500
+            );
+        }
+
+
     }
 
 }
