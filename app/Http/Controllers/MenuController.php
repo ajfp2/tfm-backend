@@ -5,31 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Menu;
 
-class MenuController extends Controller
+class MenuController extends BaseController
 {    
     /**
-     * Display a listing of the resource.
      * Obtiene todos los menús para el administrador
      */
     public function index()
     {
         $menus = Menu::with('children')->principales()->orderBy('order')->get();
-        
-        return response()->json([
-            'data' => $menus
-        ], 200);
+        return $this->sendResponse($menus, 'Menúss obtenidos correctamente.', 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
-     * Store a newly created resource in storage.
+     * Creamos un menú.
      */
     public function store(Request $request)
     {
@@ -45,31 +34,21 @@ class MenuController extends Controller
         ]);
 
         $menu = Menu::create($validated);
+        return $this->sendResponse($menu, 'Menú creado correctamente', 201);
 
-        return response()->json([
-            'message' => 'Menú creado correctamente',
-            'data' => $menu
-        ], 201);
     }
 
     /**
-     * Display the specified resource.
+     * Mostramos una opcion de mneu.
      */
     public function show(string $id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
 
     /**
-     * Update the specified resource in storage.
+     * Actualizamos.
      */
     public function update(Request $request, string $id)
     {
@@ -88,23 +67,18 @@ class MenuController extends Controller
 
         $menu->update($validated);
 
-        return response()->json([
-            'message' => 'Menú actualizado correctamente',
-            'data' => $menu
-        ], 200);
+        return $this->sendResponse($menu, 'Menú actualizado correctamente', 200);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Eliminamos menu.
      */
     public function destroy(string $id)
     {
         $menu = Menu::findOrFail($id);
         $menu->delete();
 
-        return response()->json([
-            'message' => 'Menú eliminado correctamente'
-        ], 200);
+        return $this->sendResponse($menu, 'Menú eliminado correctamente', 200);
     }
 
     /**
@@ -115,28 +89,24 @@ class MenuController extends Controller
         $user = auth()->user();
         
         if (!$user) {
-            return response()->json([
-                'message' => 'Usuario no autenticado'
-            ], 401);
+            return $this->sendError('Usuario no autenticado', [], 401);
         }
 
         $rolUsuario = $user->perfil;
 
-        // Obtener menús principales
+        // Obtener los menús principales
         $menus = Menu::activos()
             ->principales()
             ->porRol($rolUsuario)
             ->orderBy('order')
             ->get();
 
-        // Construir estructura con children recursivos
+        // Construir la estructura con los hijos recursivos
         $menuItems = $menus->map(function ($menu) use ($rolUsuario) {
             return $this->buildMenuItem($menu, $rolUsuario);
         });
 
-        return response()->json([
-            'menuItems' => $menuItems
-        ], 200);
+        return $this->sendResponse($menuItems, 'Menú completo correctamente', 200);        
     }
 
     /**
@@ -150,17 +120,17 @@ class MenuController extends Controller
             'order' => $menu->order
         ];
 
-        // Añadir icono si existe
+        // Añadimos icono
         if ($menu->icon) {
             $item['icon'] = $menu->icon;
         }
 
-        // Añadir ruta si existe
+        // Añadimos ruta
         if ($menu->route) {
             $item['route'] = $menu->route;
         }
 
-        // Obtener hijos
+        // Obtenemos hijos
         $children = Menu::activos()
             ->where('parent_id', $menu->id)
             ->porRol($rolUsuario)
