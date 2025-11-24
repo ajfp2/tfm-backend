@@ -86,27 +86,39 @@ class MenuController extends BaseController
      */
     public function getMenu(Request $request)
     {
-        $user = auth()->user();
-        
-        if (!$user) {
-            return $this->sendError('Usuario no autenticado', [], 401);
+
+        try{
+            $user = auth()->user();
+            // \Log::info('Datos recibidos en menu-User:' . $user->nombre);
+            if (!$user) {
+                return $this->sendError('Usuario no autenticado', [], 401);
+            }
+            // return $this->sendResponse($user, 'Menú completo correctamente', 200);
+
+            $rolUsuario = $user->perfil;
+
+            // Obtener los menús principales
+            $menus = Menu::activos()
+                ->principales()
+                ->porRol($rolUsuario)
+                ->orderBy('order')
+                ->get();
+
+            // Construir la estructura con los hijos recursivos
+            $menuItems = $menus->map(function ($menu) use ($rolUsuario) {                
+                return $this->buildMenuItem($menu, $rolUsuario);
+            });
+           
+            return $this->sendResponse($menuItems, 'Menú completo correctamente', 200);        
+        } catch(\Exception $e) {
+             \Log::error('Error Menú: ' . $e->getMessage());
+            return $this->sendError(
+                'Error al obtener listado datos peña',
+                ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
+                500
+            );
         }
-
-        $rolUsuario = $user->perfil;
-
-        // Obtener los menús principales
-        $menus = Menu::activos()
-            ->principales()
-            ->porRol($rolUsuario)
-            ->orderBy('order')
-            ->get();
-
-        // Construir la estructura con los hijos recursivos
-        $menuItems = $menus->map(function ($menu) use ($rolUsuario) {
-            return $this->buildMenuItem($menu, $rolUsuario);
-        });
-
-        return $this->sendResponse($menuItems, 'Menú completo correctamente', 200);        
+        
     }
 
     /**

@@ -10,7 +10,7 @@ use App\Models\SocioProvincia;
 use App\Models\SocioMunicipio;
 use App\Models\SocioFormaPago;
 
-class SocioSelectController extends BaseController
+class SocioAuxiliarController extends BaseController
 {
     /**
      * Obtener todas las nacionalidades

@@ -34,60 +34,6 @@ class UserController extends BaseController
         
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store_logs(Request $request){
-        try {
-            // Debug: ver qué llega
-            \Log::info('Datos recibidos:', $request->all());
-            
-            $validated = $request->validate([
-                'nombre' => 'required|string|min:4|max:25',
-                'apellidos' => 'required|string|min:4|max:50',
-                'usuario' => 'required|string|min:4|max:25|unique:users',
-                'email' => 'required|email|unique:users',
-                'password' => 'required|min:8',
-                'telefono' => 'required|string|regex:/^[67][0-9]{8}$/',
-                'perfil' => 'required|in:1,2',
-                'foto' => 'nullable|image|max:5120'
-            ]);
-
-            $validated['estado'] = true;
-            // Convertir perfil a integer
-            $validated['perfil'] = (int) $validated['perfil'];
-            
-            // Hash password
-            $validated['password'] = Hash::make($validated['password']);
-
-            // Procesar foto
-            if ($request->hasFile('foto')) {
-                $path = $request->file('foto')->store('usuarios', 'public');
-                $validated['foto'] = url('storage/' . $path);
-            }
-
-            $user = User::create($validated);
-            
-            return response()->json([
-                'message' => 'Usuario creado correctamente',
-                'data' => $user
-            ], 201);
-            
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Error de validación',
-                'errors' => $e->errors()
-            ], 422);
-            
-        } catch (\Exception $e) {
-            \Log::error('Error al crear usuario: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Error al crear usuario',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
     public function store(Request $request)
     {
         try{

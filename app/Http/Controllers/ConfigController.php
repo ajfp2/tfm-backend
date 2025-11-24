@@ -189,7 +189,7 @@ class ConfigController extends BaseController
     public function activa(): JsonResponse
     {
         try {
-            \Log::info('Datos recibidos ACTIVA:');
+            // \Log::info('Datos recibidos ACTIVA');
             $configuracion = Configuracion::first();
 
             if (!$configuracion) {
