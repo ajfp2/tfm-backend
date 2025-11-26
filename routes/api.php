@@ -32,22 +32,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // CONFIGURACIÓN
     // ==========================================
-    // Route::get('/configuracion', [ConfigController::class, 'index']);
     Route::get('configuracion/activa', [ConfigController::class, 'activa']);
-    // Route::get('/configuracion/{id}', [ConfigController::class, 'show']);
-    // Route::post('/configuracion', [ConfigController::class, 'store']);
     Route::put('/configuracion/{id}', [ConfigController::class, 'update']);
-    // Route::delete('/configuracion/{id}', [ConfigController::class, 'destroy']);
-    // Route::post('/configuracion/{id}/activar', [ConfigController::class, 'activar']);
 
     // ==========================================
     // MENÚ
     // ==========================================
     Route::get('/menu', [MenuController::class, 'getMenu']);
-    // Route::get('/menus', [MenuController::class, 'index']);
-    // Route::post('/menus', [MenuController::class, 'store']);
-    // Route::put('/menus/{id}', [MenuController::class, 'update']);
-    // Route::delete('/menus/{id}', [MenuController::class, 'destroy']);
     
     // ==========================================
     // USUARIOS
