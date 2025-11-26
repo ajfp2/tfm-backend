@@ -64,7 +64,7 @@ class TemporadaController extends BaseController
         try {
             $temporada = Temporada::findOrFail($id);
             
-            return $this->sendResponse($temporada, 'Temporada activa obtenida correctamente.', 200);
+            return $this->sendResponse($temporada, 'Temporada obtenida correctamente '.$id, 200);
 
         } catch(\Exception $e) {
              \Log::error('Error al mostrar la temporada ' . $e->getMessage());
@@ -89,7 +89,7 @@ class TemporadaController extends BaseController
                 'fechaIni' => 'required|date',
                 'fechaFin' => 'nullable|date',
                 'saldoIni' => 'required|string|max:10',
-                'saldoFin' => 'required|string|max:10',
+                'saldoFin' => 'nullable|string|max:10',
                 'activa' => 'sometimes|boolean',
                 'cuotaPasada' => 'sometimes|boolean'
             ]);
@@ -126,7 +126,7 @@ class TemporadaController extends BaseController
                 'fechaIni' => 'sometimes|required|date',
                 'fechaFin' => 'nullable|date',
                 'saldoIni' => 'sometimes|required|string|max:10',
-                'saldoFin' => 'sometimes|required|string|max:10',
+                'saldoFin' => 'sometimes|string|max:10',
                 'activa' => 'sometimes|boolean',
                 'cuotaPasada' => 'sometimes|boolean'
             ]);

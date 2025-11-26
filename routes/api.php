@@ -32,7 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // CONFIGURACIÓN
     // ==========================================
-    Route::get('configuracion/activa', [ConfigController::class, 'activa']);
+    Route::get('/configuracion/activa', [ConfigController::class, 'activa']);
     Route::put('/configuracion/{id}', [ConfigController::class, 'update']);
 
     // ==========================================
@@ -62,15 +62,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::post('/temporadas', [TemporadaController::class, 'store']);
     // Route::put('/temporadas/{id}', [TemporadaController::class, 'update']);
     // Route::delete('/temporadas/{id}', [TemporadaController::class, 'destroy']);
-    Route::get('/temporadas/activa', [TemporadaController::class, 'getActiva']);
+    Route::get('/temporadas/lista/activa', [TemporadaController::class, 'getActiva']);
     Route::post('/temporadas/{id}/activar', [TemporadaController::class, 'activar']);
     
     // ==========================================
     // JUNTA DIRECTIVA (Cargos)
     // ==========================================
     Route::apiResource('/junta-directiva', JuntaDirectivaController::class);
-    Route::get('/junta-directiva', [JuntaDirectivaController::class, 'index']);
     Route::get('/junta-directiva/activos', [JuntaDirectivaController::class, 'activos']);
+    // Route::get('/junta-directiva', [JuntaDirectivaController::class, 'index']);    
     // Route::get('/junta-directiva/{id}', [JuntaDirectivaController::class, 'show']);
     // Route::post('/junta-directiva', [JuntaDirectivaController::class, 'store']);
     // Route::put('/junta-directiva/{id}', [JuntaDirectivaController::class, 'update']);
