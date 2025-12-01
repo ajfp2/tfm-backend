@@ -14,8 +14,11 @@ use App\Http\Controllers\TemporadaController;
 use App\Http\Controllers\JuntaDirectivaController;
 use App\Http\Controllers\HistorialCargoDirectivoController;
 use App\Http\Controllers\SocioTipoSocioController;
-
-
+use App\Http\Controllers\SocioAuxiliarController;
+use App\Http\Controllers\ContactoController;
+use App\Http\Controllers\TareaPendienteController;
+use App\Http\Controllers\HistorialAnualController;
+use App\Http\Controllers\HistorialAnualBajaController;
 
 // Ruta libre para login
 Route::post('/login', [AuthController::class, 'login']);
@@ -94,9 +97,86 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::put('/tipos-socio/{id}', [SocioTipoSocioController::class, 'update']);
     // Route::delete('/tipos-socio/{id}', [SocioTipoSocioController::class, 'destroy']);
 
-    // Ruta CRUD Socios
-    Route::apiResource('socios', SocioController::class);
+    // ==========================================
+    // AUX: PAISES; PROVINCIAS, MUNICIPIOS, PAGOS ...
+    // ==========================================    
 
+    Route::get('/nacionalidades', [SocioAuxiliarController::class, 'nacionalidades']);    
+    Route::get('/provincias', [SocioAuxiliarController::class, 'provincias']);    
+    Route::get('/municipios', [SocioAuxiliarController::class, 'municipios']);    
+    Route::get('/formas-pago', [SocioAuxiliarController::class, 'formaspago']);
+
+    // ==========================================
+    // SOCIOS (Unificado: Personas + Alta + Baja)
+    // ==========================================
+    // Ruta CRUD Socios
+    Route::apiResource('/socios', SocioController::class);
+
+    // Route::get('/socios', [SocioController::class, 'index']); // ?tipo=activos|bajas|todos
+    // Route::get('/socios/{id}', [SocioController::class, 'show']);
+    // Route::post('/socios', [SocioController::class, 'store']);
+    // Route::put('/socios/{id}', [SocioController::class, 'update']);
+    // Route::delete('/socios/{id}', [SocioController::class, 'destroy']);
+
+    // Dar de baja a un socio
+    Route::post('/socios/{id}/baja', [SocioController::class, 'darBaja']);
+    // Reactivar socio (de baja a alta)
+    Route::post('/socios/{id}/reactivar', [SocioController::class, 'reactivar']);
+
+    // ==========================================
+    // CONTACTOS (Empresas/Proveedores)
+    // ==========================================
+    Route::apiResource('/contactos', ContactoController::class);
+    // Route::get('/contactos', [ContactoController::class, 'index']);
+    // Route::get('/contactos/{id}', [ContactoController::class, 'show']);
+    // Route::post('/contactos', [ContactoController::class, 'store']);
+    // Route::put('/contactos/{id}', [ContactoController::class, 'update']);
+    // Route::delete('/contactos/{id}', [ContactoController::class, 'destroy']);
+
+    // ==========================================
+    // TAREAS PENDIENTES
+    // ==========================================
+    Route::get('/tareas', [TareaPendienteController::class, 'index']);
+    Route::get('/tareas/pendientes', [TareaPendienteController::class, 'pendientes']);
+    Route::get('/tareas/{id}', [TareaPendienteController::class, 'show']);
+    Route::post('/tareas', [TareaPendienteController::class, 'store']);
+    Route::put('/tareas/{id}', [TareaPendienteController::class, 'update']);
+    Route::post('/tareas/{id}/progreso', [TareaPendienteController::class, 'actualizarProgreso']);
+    Route::post('/tareas/{id}/finalizar', [TareaPendienteController::class, 'finalizar']);
+    Route::post('/tareas/{id}/reabrir', [TareaPendienteController::class, 'reabrir']);
+    Route::delete('/tareas/{id}', [TareaPendienteController::class, 'destroy']);
+
+    // ==========================================
+    // HISTORIAL ANUAL (Cuotas de socios activos)
+    // ==========================================    
+    // Listar historial
+    Route::get('/historial-anual', [HistorialAnualController::class, 'index']); // ?temporada_id=X&estado=pagados|pendientes|exentos    
+    // Historial por socio
+    Route::get('/historial-anual/socio/{socioId}', [HistorialAnualController::class, 'porSocio']);    
+    // Historial por temporada
+    Route::get('/historial-anual/temporada/{temporadaId}', [HistorialAnualController::class, 'porTemporada']);    
+    // Generar historial para todos los socios activos
+    Route::post('/historial-anual/generar', [HistorialAnualController::class, 'generarHistorial']);    
+    // Crear registro manual
+    Route::post('/historial-anual', [HistorialAnualController::class, 'store']);    
+    // Actualizar historial
+    Route::put('/historial-anual/{socioId}/{temporadaId}', [HistorialAnualController::class, 'update']);    
+    // Marcar como pagado
+    Route::post('/historial-anual/{socioId}/{temporadaId}/pagar', [HistorialAnualController::class, 'marcarPagado']);    
+    // Marcar como no pagado
+    Route::post('/historial-anual/{socioId}/{temporadaId}/no-pagar', [HistorialAnualController::class, 'marcarNoPagado']);    
+    // Estadísticas de una temporada
+    Route::get('/historial-anual/estadisticas/{temporadaId}', [HistorialAnualController::class, 'estadisticas']);
+
+    // ==========================================
+    // HISTORIAL ANUAL BAJAS (Cuotas de socios de baja)
+    // ==========================================    
+    // Listar historial de bajas
+    Route::get('/historial-bajas', [HistorialAnualBajaController::class, 'index']); // ?temporada_id=X&estado=pagados|pendientes|exentos    
+    // Historial por socio de baja
+    Route::get('/historial-bajas/socio/{socioId}', [HistorialAnualBajaController::class, 'porSocio']);    
+    // Marcar como pagado
+    Route::post('/historial-bajas/{socioId}/{temporadaId}/pagar', [HistorialAnualBajaController::class, 'marcarPagado']);
 
 });
 
