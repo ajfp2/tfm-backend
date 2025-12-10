@@ -19,6 +19,7 @@ use App\Http\Controllers\ContactoController;
 use App\Http\Controllers\TareaPendienteController;
 use App\Http\Controllers\HistorialAnualController;
 use App\Http\Controllers\HistorialAnualBajaController;
+use App\Http\Controllers\DashboardController;
 
 // Ruta libre para login
 Route::post('/login', [AuthController::class, 'login']);
@@ -58,15 +59,16 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // ==========================================
     // TEMPORADAS
-    // ==========================================
-    Route::apiResource('/temporadas', TemporadaController::class);
+    // ==========================================    
     // Route::get('/temporadas', [TemporadaController::class, 'index']);    
     // Route::get('/temporadas/{id}', [TemporadaController::class, 'show']);
     // Route::post('/temporadas', [TemporadaController::class, 'store']);
     // Route::put('/temporadas/{id}', [TemporadaController::class, 'update']);
     // Route::delete('/temporadas/{id}', [TemporadaController::class, 'destroy']);
-    Route::get('/temporadas/lista/activa', [TemporadaController::class, 'getActiva']);
+    // Route::get('/temporadas/lista/activa', [TemporadaController::class, 'getActiva']);
+    Route::get('/temporadas/activa', [TemporadaController::class, 'getActiva']);
     Route::post('/temporadas/{id}/activar', [TemporadaController::class, 'activar']);
+    Route::apiResource('/temporadas', TemporadaController::class);
     
     // ==========================================
     // JUNTA DIRECTIVA (Cargos)
@@ -109,19 +111,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // SOCIOS (Unificado: Personas + Alta + Baja)
     // ==========================================
-    // Ruta CRUD Socios
-    Route::apiResource('/socios', SocioController::class);
 
-    // Route::get('/socios', [SocioController::class, 'index']); // ?tipo=activos|bajas|todos
+    
     // Route::get('/socios/{id}', [SocioController::class, 'show']);
     // Route::post('/socios', [SocioController::class, 'store']);
     // Route::put('/socios/{id}', [SocioController::class, 'update']);
     // Route::delete('/socios/{id}', [SocioController::class, 'destroy']);
-
+    Route::get('/socios/exentos', [SocioController::class, 'exentos']);
     // Dar de baja a un socio
     Route::post('/socios/{id}/baja', [SocioController::class, 'darBaja']);
     // Reactivar socio (de baja a alta)
     Route::post('/socios/{id}/reactivar', [SocioController::class, 'reactivar']);
+        // Ruta CRUD Socios
+    Route::apiResource('/socios', SocioController::class);
 
     // ==========================================
     // CONTACTOS (Empresas/Proveedores)
@@ -177,6 +179,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/historial-bajas/socio/{socioId}', [HistorialAnualBajaController::class, 'porSocio']);    
     // Marcar como pagado
     Route::post('/historial-bajas/{socioId}/{temporadaId}/pagar', [HistorialAnualBajaController::class, 'marcarPagado']);
+
+
+    // ==========================================
+    // DASHBOARD
+    // ========================================== 
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/dashboard/evolucion', [DashboardController::class, 'evolucion']);
+    Route::get('/dashboard/tipos-socio', [DashboardController::class, 'tiposSocio']);
+    Route::get('/dashboard/saldos-temporadas', [DashboardController::class, 'saldosTemporadas']);
 
 });
 

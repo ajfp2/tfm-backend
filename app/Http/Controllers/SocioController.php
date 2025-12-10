@@ -72,6 +72,55 @@ class SocioController extends BaseController
         }
     }
 
+    public function deudores(){
+        // try{
+
+        //     $query = SocioPersona::with(['municipio', 'provincia', 'pais', 'nacionalidad']);
+        //     $temporada = Temporada::where('activa', true)->first();
+        
+        //     if (!$temporada) {
+        //         return $this->sendError(
+        //             'No hay temporada activa',
+        //             [],
+        //             404
+        //         );
+        //     }
+
+        //     return $this->sendResponse($temporada, 'Temporada activa obtenida correctamente.', 200);
+
+        // } catch(\Exception $e) {
+        //      \Log::error('Error al obtener la temporada activa: ' . $e->getMessage());
+        //     return $this->sendError(
+        //         'Error al obtener temporada activa',
+        //         ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
+        //         500
+        //     );
+        // }
+    }
+
+    public function exentos(){
+        try{
+
+            $socios = DB::table('socios_personas as sp')
+                ->join('socios_alta as sa', 'sp.Id_Persona', '=', 'sa.a_Persona')
+                ->join('socios_tipo_socio as ts', 'sa.fk_tipoSocio', '=', 'ts.id_tipo')
+                ->where('ts.exentos_pago', 1)
+                ->orderBy('sp.Apellidos')
+                ->orderBy('sp.Nombre')
+                ->get();
+        
+            return $this->sendResponse($socios, 'Socios exentos obtenidos correctamente.', 200);
+
+        } catch(\Exception $e) {
+             \Log::error('Error al obtener los socios exentos: ' . $e->getMessage());
+            return $this->sendError(
+                'Error al obtener los socios exentos',
+                ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
+                500
+            );
+        }
+    }
+
     /**
      * Mostrar un socio completo (persona, alta/baja, historial)
      */

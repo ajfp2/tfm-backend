@@ -14,7 +14,7 @@ class Temporada extends Model
 
     protected $fillable = [
         'temporada',
-        'abrev',
+        'abreviatura',
         'fechaIni',
         'fechaFin',
         'saldoIni',
@@ -26,11 +26,14 @@ class Temporada extends Model
     protected $casts = [
         'fechaIni' => 'datetime',
         'fechaFin' => 'datetime',
+        'saldoIni' => 'decimal:2',
         'activa' => 'boolean',
-        'cuotaPasada' => 'boolean'
+        'cuotaPasada' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    // Relaciones
+    // Relaciones: Una temporada tiene muchos registros de historial anual (cuotas)1:n
     public function historialAnual()
     {
         return $this->hasMany(HistorialAnual::class, 'a_temporada');
@@ -50,5 +53,10 @@ class Temporada extends Model
     public function scopeActiva($query)
     {
         return $query->where('activa', true);
+    }
+
+    public function scopeOrdenarPorReciente($query)
+    {
+        return $query->orderBy('fecha_inicio', 'desc');
     }
 }
