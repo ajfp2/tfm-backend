@@ -15,13 +15,20 @@ class Configuracion extends Model
     protected $primaryKey = 'id';
 
     
-    public $timestamps = false;
+    public $timestamps = true;
 
 
     protected $fillable = [
         'tipo',
         'ejercicio',
-        'modificado'
+        'modificado',
+        'titulo',
+        'subtitulo',
+        'logo',
+        'navbar_color',
+        'gradient_from',
+        'gradient_to',
+        'a_temporada_activa'
     ];
 
     protected $casts = [
@@ -31,4 +38,37 @@ class Configuracion extends Model
     protected $attributes = [
         'modificado' => false,
     ];
+
+    /**
+     * Obtener la única instancia de configuración (Singleton)
+     */
+    public static function getInstance()
+    {
+        $config = self::first();
+        
+        if (!$config) {
+            // Si no existe, crear una por defecto
+            $config = self::create([
+                'tipo' => 'Peña',
+                'ejercicio' => 'Temporada',
+                'modificado' => false,
+                'titulo' => 'Sistema de Gestión',
+                'subtitulo' => 'Temporada',
+                'logo' => '',
+                'navbar_color' => '#0d6efd',
+                'gradient_from' => '#667eea',
+                'gradient_to' => '#764ba2',
+            ]);
+        }
+        
+        return $config;
+    }
+
+    /**
+     * Relación: Pertenece a una Temporada activa
+     */
+    public function temporadaActiva()
+    {
+        return $this->belongsTo(Temporada::class, 'a_temporada_activa', 'id');
+    }
 }

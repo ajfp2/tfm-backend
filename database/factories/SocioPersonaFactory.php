@@ -28,8 +28,8 @@ class SocioPersonaFactory extends Factory
             'FNac' => $this->faker->optional(0.8)->dateTimeBetween('-70 years', '-18 years'),
             'Direccion' => $this->faker->optional(0.7)->streetAddress(),
             'CP' => $this->faker->optional(0.7)->numerify('#####'),
-            'Poblacion' => $this->faker->optional(0.7)->numberBetween(1, 100), // Municipio al azar
-            'Provincia' => $this->faker->optional(0.7)->numberBetween(1, 52), // Provincia al azar
+            'Poblacion' => $this->faker->optional(0.7)->numberBetween(150, 290), // Municipio al azar de la provincia de Alicante
+            'Provincia' => 3, // Provincia Alicante por defecto
             'Pais' => 60, // España por defecto
             'Nacionalidad' => 60, // Española por defecto
             'IBAN' => $this->faker->optional(0.5)->iban('ES'),

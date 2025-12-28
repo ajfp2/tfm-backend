@@ -38,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     Route::get('/configuracion/activa', [ConfigController::class, 'activa']);
     Route::put('/configuracion/{id}', [ConfigController::class, 'update']);
+    Route::put('/configuracion/{id}/visual', [ConfigController::class, 'updateVisual']);
+    Route::post('/configuracion/upload-logo', [ConfigController::class, 'uploadLogo']);
+    Route::delete('/configuracion/delete-logo', [ConfigController::class, 'deleteLogo']);
 
     // ==========================================
     // MENÚ
@@ -53,9 +56,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // PEÑA (Datos básicos)
     // ==========================================
-    Route::get('penya', [PenyaController::class, 'index']);
-    Route::get('penya/{id}', [PenyaController::class, 'show']);
-    Route::put('/penya/{id}', [PenyaController::class, 'update']);
+    Route::get('/penya', [PenyaController::class, 'show']);
+    Route::get('/penya/show-banco', [PenyaController::class, 'showDatosBanco']);
+    Route::put('/penya/datos-generales', [PenyaController::class, 'updateDatos']);
+    Route::put('/penya/datos-bancarios', [PenyaController::class, 'updateDatosBancarios']);
     
     // ==========================================
     // TEMPORADAS
@@ -85,7 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // HISTORIAL CARGOS DIRECTIVOS
     // ==========================================
     Route::get('/historial-cargos', [HistorialCargoDirectivoController::class, 'index']);
-    // Route::get('/historial-cargos/temporada/{temporadaId}', [HistorialCargoDirectivoController::class, 'porTemporada']);
+    Route::get('/historial-cargos/temporada/{temporadaId}', [HistorialCargoDirectivoController::class, 'porTemporada']);
     // Route::post('/historial-cargos', [HistorialCargoDirectivoController::class, 'store']);
     // Route::delete('/historial-cargos', [HistorialCargoDirectivoController::class, 'destroy']);
     
@@ -111,19 +115,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // SOCIOS (Unificado: Personas + Alta + Baja)
     // ==========================================
-
-    
-    // Route::get('/socios/{id}', [SocioController::class, 'show']);
-    // Route::post('/socios', [SocioController::class, 'store']);
-    // Route::put('/socios/{id}', [SocioController::class, 'update']);
-    // Route::delete('/socios/{id}', [SocioController::class, 'destroy']);
-    Route::get('/socios/exentos', [SocioController::class, 'exentos']);
-    // Dar de baja a un socio
-    Route::post('/socios/{id}/baja', [SocioController::class, 'darBaja']);
-    // Reactivar socio (de baja a alta)
-    Route::post('/socios/{id}/reactivar', [SocioController::class, 'reactivar']);
-        // Ruta CRUD Socios
-    Route::apiResource('/socios', SocioController::class);
+    Route::get('/socios/exentos', [SocioController::class, 'getExentos']); // Obtener Socios exentos
+    Route::get('/socios/deudores', [SocioController::class, 'getDeudores']); // Obtener Socios deudores
+    Route::get('/socios/{id}/deudas', [SocioController::class, 'getDeudaSocio']); // Obtener Socios con deudas
+    Route::post('/socios/{id}/baja', [SocioController::class, 'darBaja']); // Dar de baja a un socio    
+    Route::post('/socios/{id}/reactivar', [SocioController::class, 'reactivar']); // Reactivar socio (de baja a alta)
+    Route::apiResource('/socios', SocioController::class); // Ruta CRUD Socios
 
     // ==========================================
     // CONTACTOS (Empresas/Proveedores)

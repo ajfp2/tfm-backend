@@ -72,55 +72,6 @@ class SocioController extends BaseController
         }
     }
 
-    public function deudores(){
-        // try{
-
-        //     $query = SocioPersona::with(['municipio', 'provincia', 'pais', 'nacionalidad']);
-        //     $temporada = Temporada::where('activa', true)->first();
-        
-        //     if (!$temporada) {
-        //         return $this->sendError(
-        //             'No hay temporada activa',
-        //             [],
-        //             404
-        //         );
-        //     }
-
-        //     return $this->sendResponse($temporada, 'Temporada activa obtenida correctamente.', 200);
-
-        // } catch(\Exception $e) {
-        //      \Log::error('Error al obtener la temporada activa: ' . $e->getMessage());
-        //     return $this->sendError(
-        //         'Error al obtener temporada activa',
-        //         ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
-        //         500
-        //     );
-        // }
-    }
-
-    public function exentos(){
-        try{
-
-            $socios = DB::table('socios_personas as sp')
-                ->join('socios_alta as sa', 'sp.Id_Persona', '=', 'sa.a_Persona')
-                ->join('socios_tipo_socio as ts', 'sa.fk_tipoSocio', '=', 'ts.id_tipo')
-                ->where('ts.exentos_pago', 1)
-                ->orderBy('sp.Apellidos')
-                ->orderBy('sp.Nombre')
-                ->get();
-        
-            return $this->sendResponse($socios, 'Socios exentos obtenidos correctamente.', 200);
-
-        } catch(\Exception $e) {
-             \Log::error('Error al obtener los socios exentos: ' . $e->getMessage());
-            return $this->sendError(
-                'Error al obtener los socios exentos',
-                ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
-                500
-            );
-        }
-    }
-
     /**
      * Mostrar un socio completo (persona, alta/baja, historial)
      */
@@ -517,6 +468,286 @@ class SocioController extends BaseController
                         
             return $this->sendError( 'Error al eliminar al socio', ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()], 500);
             
+        }
+    }
+
+
+    public function getExentos()
+    {
+        try {
+            $sociosExentos = SocioPersona::getSociosExentos();
+            
+            return $this->sendResponse($sociosExentos, 'Socios exentos obtenidos correctamente.', 200);
+
+        } catch (\Exception $e) {
+            return $this->sendError(
+                'Error al obtener los socios exentos',
+                ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
+                500
+            );
+        }
+    }
+
+    /**
+     * Obtener socios deudores según temporada
+     * GET /api/socios/deudores?tipo={activa|inactiva|todas}
+     */
+    public function getDeudores(Request $request)
+    {
+        try {
+
+            $tipo = $request->get('tipo', 'activa'); // activos, bajas, todos
+
+            $temporadas = $this->obtenerTemporadasSegunTipo($tipo);
+
+            if ($temporadas->isEmpty()) {
+                return $this->sendError( 'No se encontraron temporadas para el tipo especificado', [], 404);                
+            }
+
+            // Obtener IDs de temporadas
+            $temporadaIds = $temporadas->pluck('id')->toArray();// extrae una columna específica o un par clave-valor de una colección o consulta a la base de datos
+
+            // Obtener socios deudores
+            $sociosDeudores = $this->calcularSociosDeudores($temporadaIds);
+
+            // Agrupar deuda por socio
+            $deudoresPorSocio = $sociosDeudores->groupBy('Id_Persona')->map(function($deudas) {
+                $persona = $deudas->first();
+                $totalDeuda = $deudas->sum('importe_pendiente');
+                
+                return [
+                    'Id_Persona' => $persona->Id_Persona,
+                    'nsocio' => $persona->nsocio,
+                    'nombre_completo' => $persona->nombre_completo,
+                    'Email' => $persona->Email,
+                    'Movil' => $persona->Movil,
+                    'fecha_alta' => $persona->fecha_alta,
+                    'tipo_socio' => $persona->tipo_socio,
+                    'total_deuda' => round($totalDeuda, 2),                    
+                ];
+            })->values();
+
+            // Estadísticas
+            // $estadisticas = [
+            //     'tipo_consulta' => $tipo,
+            //     'temporadas_consultadas' => $temporadas->map(function($t) {
+            //         return [
+            //             'id' => $t->id,
+            //             'temporada' => $t->temporada,
+            //             'activa' => $t->activa
+            //         ];
+            //     }),
+            //     'total_socios_deudores' => $deudoresPorSocio->count(),
+            //     'deuda_total' => round($deudoresPorSocio->sum('total_deuda'), 2),
+            //     'deuda_promedio' => $deudoresPorSocio->count() > 0 
+            //         ? round($deudoresPorSocio->avg('total_deuda'), 2) 
+            //         : 0
+            // ];
+
+            return $this->sendResponse($deudoresPorSocio, 'Socios deudores obtenidos correctamente', 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error deudor socio: ' . $e->getMessage() . ' l:' . $e->getLine());
+            return $this->sendError( 'Error al obtener socios deudores', ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Obtener temporadas según tipo
+    */
+    private function obtenerTemporadasSegunTipo($tipo){
+        switch ($tipo) {
+            case 'activa':
+                return Temporada::where('activa', 1)->get();
+                
+            case 'inactiva':
+                return Temporada::where('activa', 0)->get();
+                
+            case 'todas':
+                return Temporada::all();
+                
+            default:
+                return collect([]);
+        }
+    }
+
+    /**
+     * Calcular socios deudores para las temporadas especificadas
+    */
+    private function calcularSociosDeudores($temporadaIds){
+        return DB::table('historial_anual as ha')
+            ->join('socios_personas as sp', 'ha.a_socio', '=', 'sp.Id_Persona')
+            ->join('socios_alta as sa', 'sp.Id_Persona', '=', 'sa.a_Persona')
+            ->join('socios_tipo_socio as ts', 'sa.fk_tipoSocio', '=', 'ts.Id_Tipo')
+            ->join('temporadas as t', 'ha.a_temporada', '=', 't.id')
+            ->select(
+                'sp.Id_Persona',
+                'sa.nsocio',
+                'sa.fecha_alta',
+                DB::raw("CONCAT(sp.Apellidos, ', ', sp.Nombre) as nombre_completo"),
+                'sp.Email',
+                'sp.Movil',
+                'ts.tipo as tipo_socio',
+                't.temporada',
+                't.activa',
+                'ha.importe as importe_cuota',
+                'ha.importe_pendiente',
+                'ha.cuota_pagada'
+            )
+            ->whereIn('ha.a_temporada', $temporadaIds)
+            // Solo socios con deuda (importe_pendiente > 0)
+            ->where(function($query) {
+                $query->where(function($q) {
+                    // Caso 1: exento = 0 y cuota_pagada es NULL
+                    $q->where('ha.exento', 0)
+                      ->where('ha.cuota_pagada', 0);
+                })
+                ->orWhere(function($q) {
+                    // Caso 2: exento = 0 y cuota_pagada < importe
+                    $q->where('ha.exento', 0)
+                      ->where('ha.importe_pendiente', '>', 0);
+                });
+            })
+            ->orderBy('sa.nsocio')
+            ->orderBy('t.temporada')
+            ->get();
+    }
+
+    /**
+     * Obtener detalle de deuda de un socio específico
+    */
+    public function getDeudaSocio($id)
+    {
+        try {
+            $persona = SocioPersona::with(['alta.tipoSocio'])->findOrFail($id);
+             
+            if ($persona->isActivo()) {                
+                $tabla = DB::table("historial_anual AS hs");
+                $where = "hs.a_socio";
+            } else {
+                if($persona->isBaja()){
+                    $tabla = DB::table("historial_anual_bajas AS hs");
+                    $where = "hs.a_socio_baja";
+                } else {
+                    return $this->sendError('La persona no está ni activa ni de baja, comprobar datos', [], 404);
+                }
+            }
+
+            // Obtener historial de deudas
+            $deudas = $tabla->join('temporadas as t', 'hs.a_temporada', '=', 't.id')
+                ->select(
+                    't.id as temporada_id',
+                    't.temporada',
+                    't.activa',
+                    'hs.importe as importe_cuota',
+                    'hs.cuota_pagada',
+                    'hs.importe_pendiente',
+                    'hs.exento',
+                    DB::raw('CASE 
+                        WHEN hs.exento = 1 THEN "EXENTO"
+                        WHEN hs.cuota_pagada = 1 THEN "PAGADO"
+                        WHEN hs.cuota_pagada = 0 AND hs.importe_pendiente > 0 THEN "PENDIENTE"
+                        ELSE "SIN DEFINIR"
+                    END as estado')                    
+                )
+                ->where($where, $id)
+                ->orderBy('t.temporada', 'desc')
+                ->get();
+
+            $totalDeuda = $deudas->sum('importe_pendiente');
+            $totalPagado = $deudas->sum('importe_cuota') - $totalDeuda;
+
+            return $this->sendResponse([
+                'resumen' => [
+                    'total_deuda' => round($totalDeuda, 2),
+                    'total_pagado' => round($totalPagado, 2),
+                    'temporadas_con_deuda' => $deudas->where('importe_pendiente', '>', 0)->count()
+                ],
+                'deudas_por_temporada' => $deudas->map(function($deuda) {
+                    return [
+                        'temporada_id' => $deuda->temporada_id,
+                        'temporada' => $deuda->temporada,
+                        'activa' => $deuda->activa == 1,
+                        'importe_cuota' => round($deuda->importe_cuota, 2),
+                        'importe_pagado' => round($deuda->cuota_pagada ?? 0, 2),
+                        'importe_pendiente' => round($deuda->importe_pendiente, 2),
+                        'exento' => $deuda->exento == 1,
+                        'estado' => $deuda->estado
+                    ];
+                })
+            ], 'Detalle de deudas del socio', 200);
+
+        } catch (\Exception $e) {
+            return $this->sendError(
+                'Error al obtener la deuda del socio',
+                ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
+                500
+            );
+        }
+    }
+
+    /**
+     * Obtener detalle de deuda de un socio específico
+    */
+    public function getDeudaSocioBaja($id)
+    {
+        try {
+            $persona = SocioPersona::with(['baja.tipoSocio'])->findOrFail($id);
+
+            if (!$persona->isBaja()) {                
+                return $this->sendError('La persona no está de baja', [], 404);
+            }
+
+            // Obtener historial de deudas
+            $deudas = DB::table('historial_anual_bajas as hb')
+                ->join('temporadas as t', 'ha.a_temporada', '=', 't.id')
+                ->select(
+                    't.id as temporada_id',
+                    't.temporada',
+                    't.activa',
+                    'hb.importe as importe_cuota',
+                    'hb.cuota_pagada',
+                    'hb.importe_pendiente',
+                    'hb.exento',
+                    DB::raw('CASE 
+                        WHEN hb.exento = 1 THEN "EXENTO"
+                        WHEN hb.cuota_pagada = 1 THEN "PAGADO"
+                        WHEN hb.cuota_pagada = 0 AND hb.importe_pendiente > 0 THEN "PENDIENTE"
+                        ELSE "SIN DEFINIR"
+                    END as estado')                    
+                )
+                ->where('hb.a_socio', $id)
+                ->orderBy('t.temporada', 'desc')
+                ->get();
+
+            $totalDeuda = $deudas->sum('importe_pendiente');
+            $totalPagado = $deudas->sum('importe_cuota') - $totalDeuda;
+            
+            return $this->sendResponse([
+                'resumen' => [
+                    'total_deuda' => round($totalDeuda, 2),
+                    'total_pagado' => round($totalPagado, 2),
+                    'temporadas_con_deuda' => $deudas->where('importe_pendiente', '>', 0)->count()
+                ],
+                'deudas_por_temporada' => $deudas->map(function($deuda) {
+                    return [
+                        'temporada_id' => $deuda->temporada_id,
+                        'temporada' => $deuda->temporada,
+                        'activa' => $deuda->activa == 1,
+                        'importe_cuota' => round($deuda->importe_cuota, 2),
+                        'importe_pagado' => round($deuda->cuota_pagada ?? 0, 2),
+                        'importe_pendiente' => round($deuda->importe_pendiente, 2),
+                        'exento' => $deuda->exento == 1,
+                        'estado' => $deuda->estado
+                    ];
+                })
+            ], 'Detalle de deudas del socio', 200);
+        } catch (\Exception $e) {
+            return $this->sendError(
+                'Error al obtener la deuda del socio',
+                ['code', $e->getCode(), 'file', $e->getFile(), 'line', $e->getLine(), 'message' => $e->getMessage()],
+                500
+            );
         }
     }
 }

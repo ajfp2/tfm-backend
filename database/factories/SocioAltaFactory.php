@@ -21,10 +21,10 @@ class SocioAltaFactory extends Factory
             'fecha_alta' => $this->faker->dateTimeBetween('-5 years', 'now'),
             'n_carnet' => $this->faker->numberBetween(0, 9999),
             'sin_correspondencia' => $this->faker->boolean(10), // 10% sin correspondencia
-            'c_carta' => $this->faker->boolean(70), // 70% reciben cartas
+            'c_carta' => $this->faker->boolean(10), // 70% reciben cartas
             'c_email' => $this->faker->boolean(80), // 80% reciben emails
             'formaPago' => $this->faker->randomElement([1, 2]), // 1=Banco, 2=Efectivo
-            'fichaMadrid' => $this->faker->boolean(90), // 90% tienen ficha Madrid
+            'fichaMadrid' => $this->faker->boolean(60), // 90% tienen ficha Madrid
         ];
     }
 

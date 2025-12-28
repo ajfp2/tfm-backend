@@ -18,7 +18,8 @@ class HistorialAnualBaja extends Model
         'a_socio_baja',
         'a_temporada',
         'cuota_pagada',
-        'exento'
+        'exento',
+        'importe_pendiente'
     ];
 
     protected $casts = [

@@ -18,12 +18,16 @@ class HistorialAnual extends Model
         'a_socio',
         'a_temporada',
         'cuota_pagada',
-        'exento'
+        'exento',
+        'importe',
+        'importe_pendiente'
     ];
 
     protected $casts = [
         'cuota_pagada' => 'boolean',
-        'exento' => 'boolean'
+        'exento' => 'boolean',
+        'importe' => 'decimal:2',
+        'importe_pendiente' => 'decimal:2'
     ];
 
     // Relaciones
@@ -51,5 +55,24 @@ class HistorialAnual extends Model
     public function scopeExentos($query)
     {
         return $query->where('exento', true);
+    }
+
+    public function estaPagado()
+    {
+        return $this->cuota_pagada == 1;
+    }
+
+    public function esDeudor()
+    {
+        return !$this->exento && 
+               !$this->cuota_pagada && 
+               $this->importe_pendiente > 0;
+    }
+
+    public function marcarComoPagado()
+    {
+        $this->cuota_pagada = 1;
+        $this->importe_pendiente = 0;
+        $this->save();
     }
 }

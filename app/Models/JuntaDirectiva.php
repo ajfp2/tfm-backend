@@ -30,6 +30,6 @@ class JuntaDirectiva extends Model
     // Scope
     public function scopeActivos($query)
     {
-        return $query->where('borrar', false);
+        return $query->where('borrar', true);
     }
 }

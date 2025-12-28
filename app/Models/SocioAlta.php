@@ -61,4 +61,11 @@ class SocioAlta extends Model
     {
         return $query->where('formaPago', 2);
     }
+
+    public function scopeExentos($query)
+    {
+        return $query->whereHas('tipoSocio', function($q) {
+            $q->where('exentos_pago', 1);
+        });
+    }
 }

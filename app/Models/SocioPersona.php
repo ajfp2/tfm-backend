@@ -29,12 +29,7 @@ class SocioPersona extends Model
         'Pais',
         'Nacionalidad',
         'IBAN',
-        'BIC',
-        'Iban2',
-        'Entidad',
-        'Oficina',
-        'DC',
-        'Cuenta'
+        'BIC'
     ];
 
     protected $casts = [
@@ -88,6 +83,94 @@ class SocioPersona extends Model
         return $this->hasMany(HistorialCargoDirectiva::class, 'a_persona', 'Id_Persona');
     }
 
+    // Scope: Socios activos (de alta)
+    public function scopeActivos($query)
+    {
+        return $query->whereHas('alta');
+    }
+
+    // Scope: Socios de baja
+    public function scopeBajas($query)
+    {
+        return $query->whereHas('baja');
+    }
+
+    // Scope: Socios exentos (tipo de socio con exento = 1)
+    public function scopeExentos($query)
+    {
+        return $query->whereHas('alta.tipoSocio', function($q) {
+            $q->where('exentos_pago', 1);
+        });
+    }
+
+    // ==========================================
+    // MÉTODOS SOCIOS EXENTOS
+    // ==========================================
+
+    // Obtener todos los socios exentos de alta
+    public static function getSociosExentos()
+    {
+        return self::with(['alta.tipoSocio'])
+            ->activos()
+            ->exentos()
+            ->get();
+    }
+
+    // Obtener socios exentos simple (para dropdowns)
+    public static function getSociosExentosSimple()
+    {
+        return self::with('alta')
+            ->activos()
+            ->exentos()
+            ->get()
+            ->map(function($persona) {
+                return [
+                    'Id_Persona' => $persona->Id_Persona,
+                    'nsocio' => $persona->alta->n_socio ?? null,
+                    'nombre_completo' => $persona->Apellidos . ', ' . $persona->Nombre,
+                ];
+            });
+    }
+
+    // Contar socios exentos
+    public static function contarSociosExentos(){
+        return self::activos()->exentos()->count();
+    }
+
+    // Obtener estadísticas de socios exentos
+    public static function getEstadisticasExentos()
+    {
+        $totalSocios = self::activos()->count();
+        $totalExentos = self::contarSociosExentos();
+        $totalNoExentos = $totalSocios - $totalExentos;
+        $porcentajeExentos = $totalSocios > 0 ? round(($totalExentos / $totalSocios) * 100, 2) : 0;
+
+        // Agrupar por tipo de socio
+        $exentosPorTipo = self::with(['alta.tipoSocio'])
+                            ->activos()
+                            ->exentos()
+                            ->get()
+                            ->groupBy('alta.tipoSocio.tipo')
+                            ->map(function($grupo) {
+                                $tipoSocio = $grupo->first()->alta->tipoSocio;
+                                return [
+                                    'tipo' => $tipoSocio->tipo ?? 'Sin tipo',
+                                    'cantidad' => $grupo->count(),
+                                    'importe' => $tipoSocio->importe ?? 0
+                                ];
+                            })
+                            ->values();
+
+        return [
+            'total_socios' => $totalSocios,
+            'total_exentos' => $totalExentos,
+            'total_no_exentos' => $totalNoExentos,
+            'porcentaje_exentos' => $porcentajeExentos,
+            'exentos_por_tipo' => $exentosPorTipo
+        ];
+    }
+
+
     // Métodos auxiliares
     public function getNombreCompletoAttribute()
     {
@@ -103,4 +186,21 @@ class SocioPersona extends Model
     {
         return $this->baja()->exists();
     }
+
+    public function estaExento()
+    {
+        if (!$this->isActivo()) {
+            return false;
+        }
+
+        return $this->alta && 
+               $this->alta->tipoSocio && 
+               $this->alta->tipoSocio->exento == 1;
+    }
+
+    public function getTipoSocio()
+    {
+        return $this->alta?->tipoSocio;
+    }
+
 }

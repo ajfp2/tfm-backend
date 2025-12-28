@@ -25,6 +25,23 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SociosSeeder::class
         ]);
+
+        // 4. Historial de cuotas anuales
+        $this->command->info('💰 PASO 4: Generando historial de cuotas');
+        $this->call([
+            HistorialAnualSeeder::class,
+        ]);
+        $this->command->newLine();
+
+        // 5. Historial de cargos directivos
+        $this->command->info('👔 PASO 5: Generando historial de cargos directivos');
+        $this->call([
+            HistorialAnualDirectivaSeeder::class,
+        ]);
+        $this->command->newLine();
+
+        $this->command->info('✅ ¡Todos los seeders ejecutados correctamente!');
+        $this->command->newLine();
         
     }
 }

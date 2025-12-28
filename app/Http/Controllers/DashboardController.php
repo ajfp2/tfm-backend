@@ -120,9 +120,9 @@ class DashboardController extends BaseController
         
         $cuotasPendientes = $totalCuotas - $cuotasPagadas;
         
-        $importeTotal = 1400;// HistorialAnual::where('a_temporada', $temporadaId)->sum('importe'); => Parte de contabilidad
+        $importeTotal = HistorialAnual::where('a_temporada', $temporadaId)->sum('importe'); // Parte de contabilidad
         
-        $importePagado = 0;// HistorialAnual::where('a_temporada', $temporadaId)->where('pagado', true)->sum('importe'); => Parte de contabilidasd
+        $importePagado = HistorialAnual::where('a_temporada', $temporadaId)->where('cuota_pagada', true)->sum('importe');
         
         $importePendiente = $importeTotal - $importePagado;
         
