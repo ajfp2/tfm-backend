@@ -64,12 +64,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // TEMPORADAS
     // ==========================================    
-    // Route::get('/temporadas', [TemporadaController::class, 'index']);    
-    // Route::get('/temporadas/{id}', [TemporadaController::class, 'show']);
-    // Route::post('/temporadas', [TemporadaController::class, 'store']);
-    // Route::put('/temporadas/{id}', [TemporadaController::class, 'update']);
-    // Route::delete('/temporadas/{id}', [TemporadaController::class, 'destroy']);
-    // Route::get('/temporadas/lista/activa', [TemporadaController::class, 'getActiva']);
     Route::get('/temporadas/activa', [TemporadaController::class, 'getActiva']);
     Route::post('/temporadas/{id}/activar', [TemporadaController::class, 'activar']);
     Route::apiResource('/temporadas', TemporadaController::class);
@@ -148,34 +142,22 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     // HISTORIAL ANUAL (Cuotas de socios activos)
     // ==========================================    
-    // Listar historial
-    Route::get('/historial-anual', [HistorialAnualController::class, 'index']); // ?temporada_id=X&estado=pagados|pendientes|exentos    
-    // Historial por socio
-    Route::get('/historial-anual/socio/{socioId}', [HistorialAnualController::class, 'porSocio']);    
-    // Historial por temporada
-    Route::get('/historial-anual/temporada/{temporadaId}', [HistorialAnualController::class, 'porTemporada']);    
-    // Generar historial para todos los socios activos
-    Route::post('/historial-anual/generar', [HistorialAnualController::class, 'generarHistorial']);    
-    // Crear registro manual
-    Route::post('/historial-anual', [HistorialAnualController::class, 'store']);    
-    // Actualizar historial
-    Route::put('/historial-anual/{socioId}/{temporadaId}', [HistorialAnualController::class, 'update']);    
-    // Marcar como pagado
-    Route::post('/historial-anual/{socioId}/{temporadaId}/pagar', [HistorialAnualController::class, 'marcarPagado']);    
-    // Marcar como no pagado
-    Route::post('/historial-anual/{socioId}/{temporadaId}/no-pagar', [HistorialAnualController::class, 'marcarNoPagado']);    
-    // Estadísticas de una temporada
-    Route::get('/historial-anual/estadisticas/{temporadaId}', [HistorialAnualController::class, 'estadisticas']);
+    Route::get('/historial-anual', [HistorialAnualController::class, 'index']); // Listar historial        
+    Route::get('/historial-anual/socio/{socioId}', [HistorialAnualController::class, 'porSocio']); // Historial por socio        
+    Route::get('/historial-anual/temporada/{temporadaId}', [HistorialAnualController::class, 'porTemporada']); // Historial por temporada       
+    Route::post('/historial-anual/generar', [HistorialAnualController::class, 'generarHistorial']);// Generar historial para todos los socios activos        
+    Route::post('/historial-anual', [HistorialAnualController::class, 'store']);// Crear registro manual        
+    Route::put('/historial-anual/{socioId}/{temporadaId}', [HistorialAnualController::class, 'update']);// Actualizar historial        
+    Route::post('/historial-anual/{socioId}/{temporadaId}/pagar', [HistorialAnualController::class, 'marcarPagado']);// Marcar como pagado        
+    Route::post('/historial-anual/{socioId}/{temporadaId}/no-pagar', [HistorialAnualController::class, 'marcarNoPagado']);// Marcar como no pagado        
+    Route::get('/historial-anual/estadisticas/{temporadaId}', [HistorialAnualController::class, 'estadisticas']);// Estadísticas de una temporada
 
     // ==========================================
     // HISTORIAL ANUAL BAJAS (Cuotas de socios de baja)
-    // ==========================================    
-    // Listar historial de bajas
-    Route::get('/historial-bajas', [HistorialAnualBajaController::class, 'index']); // ?temporada_id=X&estado=pagados|pendientes|exentos    
-    // Historial por socio de baja
-    Route::get('/historial-bajas/socio/{socioId}', [HistorialAnualBajaController::class, 'porSocio']);    
-    // Marcar como pagado
-    Route::post('/historial-bajas/{socioId}/{temporadaId}/pagar', [HistorialAnualBajaController::class, 'marcarPagado']);
+    // ==========================================        
+    Route::get('/historial-bajas', [HistorialAnualBajaController::class, 'index']); // Listar historial de bajas        
+    Route::get('/historial-bajas/socio/{socioId}', [HistorialAnualBajaController::class, 'porSocio']);// Historial por socio de baja        
+    Route::post('/historial-bajas/{socioId}/{temporadaId}/pagar', [HistorialAnualBajaController::class, 'marcarPagado']);// Marcar como pagado
 
 
     // ==========================================
