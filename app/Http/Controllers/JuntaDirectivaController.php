@@ -13,7 +13,12 @@ class JuntaDirectivaController extends BaseController
     public function index()
     {
         try{
-            $cargos = JuntaDirectiva::orderBy('id')->get();
+            $cargos = JuntaDirectiva::activos()->get();
+
+            // Añadir información de firma
+            $cargos->each(function ($cargo) {
+                $cargo->tiene_firma = $cargo->tieneFirma();
+            });
             
             return $this->sendResponse($cargos, 'Tipos Cargos obtenidos correctamente.', 200);
 
@@ -54,6 +59,7 @@ class JuntaDirectivaController extends BaseController
     {
         try{
             $cargo = JuntaDirectiva::findOrFail($id);
+            $cargo->tiene_firma = $cargo->tieneFirma();
             return $this->sendResponse($cargo, 'Tipo Cargo obtenido correctamente.', 200);
         } catch(\Exception $e) {
              \Log::error('Error al obtener el cargo: ' . $e->getMessage());
@@ -156,5 +162,25 @@ class JuntaDirectivaController extends BaseController
             );
         }
         
+    }
+
+    /**
+     * Verificar si un cargo tiene firma
+     * GET /api/junta-directiva/{id}/tiene-firma
+    */
+    public function tieneFirma($id)
+    {
+        try {
+            $cargo = JuntaDirectiva::findOrFail($id);
+            
+            return $this->sendResponse([
+                'cargo_id' => $cargo->id,
+                'nombre_cargo' => $cargo->nombre_cargo,
+                'tiene_firma' => $cargo->tieneFirma(),
+                'ruta_firma' => $cargo->tieneFirma() ? 'firma_cargo_' . $cargo->id . '.png' : null
+            ], 'Información de firma obtenida');
+        } catch (\Exception $e) {
+            return $this->sendError('Cargo no encontrado', ['error' => $e->getMessage()], 404);
+        }
     }
 }

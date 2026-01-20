@@ -10,7 +10,7 @@ class Temporada extends Model
     use HasFactory;
 
     protected $table = 'temporadas';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'temporada',
@@ -58,5 +58,21 @@ class Temporada extends Model
     public function scopeOrdenarPorReciente($query)
     {
         return $query->orderBy('fecha_inicio', 'desc');
+    }
+
+    /**
+     * Relación: Una temporada tiene muchas convocatorias de juntas
+     */
+    public function convocatorias()
+    {
+        return $this->hasMany(CorrespondenciaJunta::class, 'fk_temporadas');
+    }
+
+    /**
+     * Relación: Una temporada tiene mucha correspondencia
+     */
+    public function correspondencias()
+    {
+        return $this->hasMany(Correspondencia::class, 'fk_temporadas');
     }
 }

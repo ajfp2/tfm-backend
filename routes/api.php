@@ -1,5 +1,6 @@
 <?php
 
+require __DIR__.'/correspondencia.routes.php';
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -20,6 +21,8 @@ use App\Http\Controllers\TareaPendienteController;
 use App\Http\Controllers\HistorialAnualController;
 use App\Http\Controllers\HistorialAnualBajaController;
 use App\Http\Controllers\DashboardController;
+
+
 
 // Ruta libre para login
 Route::post('/login', [AuthController::class, 'login']);
