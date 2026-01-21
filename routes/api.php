@@ -76,6 +76,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================================
     Route::apiResource('/junta-directiva', JuntaDirectivaController::class);
     Route::get('/junta-directiva/activos', [JuntaDirectivaController::class, 'activos']);
+    Route::get('junta-directiva/{id}/tiene-firma', [JuntaDirectivaController::class, 'tieneFirma']);
     // Route::get('/junta-directiva', [JuntaDirectivaController::class, 'index']);    
     // Route::get('/junta-directiva/{id}', [JuntaDirectivaController::class, 'show']);
     // Route::post('/junta-directiva', [JuntaDirectivaController::class, 'store']);

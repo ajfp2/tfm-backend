@@ -73,14 +73,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::get('temporadas', [TemporadaController::class, 'index']);
     // Route::get('temporadas/activa', [TemporadaController::class, 'activa']);
 
-    // ============================================
-    // JUNTA DIRECTIVA (CARGOS)
-    // ============================================
-    
-    Route::get('junta-directiva', [JuntaDirectivaController::class, 'index']);
-    Route::get('junta-directiva/{id}', [JuntaDirectivaController::class, 'show']);
-    Route::get('junta-directiva/{id}/tiene-firma', [JuntaDirectivaController::class, 'tieneFirma']);
-
 });
 
 /*
