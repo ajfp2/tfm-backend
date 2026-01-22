@@ -55,6 +55,12 @@ class CorrespondenciaJunta extends Model
         return $this->hasMany(Correspondencia::class, 'fk_convocatoria');
     }
 
+    public function cargoFirmante()
+    {
+        // Ajusta 'Cargo' al nombre real de tu modelo relacionado
+        return $this->belongsTo(JuntaDirectiva::class, 'firma_cargo'); 
+    }
+
     /**
      * Scope: Solo convocatorias sin enviar
      */

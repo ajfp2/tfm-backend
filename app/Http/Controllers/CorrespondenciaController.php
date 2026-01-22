@@ -106,7 +106,7 @@ class CorrespondenciaController extends BaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Error de validación', $validator->errors(), 422);
+                return $this->sendError('Error de validación', [$validator->errors()], 422);
             }
 
             // Manejar archivo adjunto
@@ -159,7 +159,7 @@ class CorrespondenciaController extends BaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Error de validación', $validator->errors(), 422);
+                return $this->sendError('Error de validación', [$validator->errors()], 422);
             }
 
             $correspondencia->update($request->all());
