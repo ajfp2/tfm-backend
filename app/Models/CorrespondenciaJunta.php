@@ -33,7 +33,7 @@ class CorrespondenciaJunta extends Model
     protected $casts = [
         'fecha' => 'datetime',
         'fecha_junta' => 'date',
-        'fecha_envio' => 'date',
+        'fecha_envio' => 'datetime',
         'vb_presidente' => 'boolean',
         'estado' => 'boolean',
         'pdfgenerado' => 'boolean'

@@ -198,9 +198,11 @@ class CorrespondenciaJuntaController extends BaseController
     {
         try {
             $convocatoria = CorrespondenciaJunta::with(['temporada', 'cargoFirmante'])->findOrFail($id);
+            // Obtengo config para el logo
+            $config = \App\Models\Configuracion::first();
 
             // Generar PDF con DomPDF
-            $pdf = Pdf::loadView('convocatorias.pdf', compact('convocatoria'));
+            $pdf = Pdf::loadView('convocatorias.pdf', compact('convocatoria', 'config'));
 
             // Guardar PDF en storage
             $filename = 'convocatoria_' . $id . '.pdf';
