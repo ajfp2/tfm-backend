@@ -15,8 +15,8 @@
             color: #333;
         }
         .header {
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
             border-bottom: 2px solid #333;
         }
         .header table {
@@ -34,22 +34,27 @@
         .title {
             font-size: 18pt;
             font-weight: bold;
-            margin: 5px 0;
+            margin: 5px 0 2px 0;
             text-transform: uppercase;
         }
-        .subtitle {
-            font-size: 14pt;
+        .subtitle1 {
+            font-size: 16pt;
+            font-weight: bold;
+            margin-bottom: 3px 0;
+        }
+        .subtitle2 {
+            font-size: 12pt;
             color: #666;
             margin-bottom: 3px 0;
         }
         .info-block {
-            margin: 20px 0;
-            padding: 15px;
+            margin: 15px 0;
+            padding: 10px 15px;
             background-color: #f5f5f5;
-            border-left: 4px solid #333;
+            border-left: 5px solid #333;
         }
         .info-row {
-            margin: 8px 0;
+            margin: 4px 0;
         }
         .label {
             font-weight: bold;
@@ -57,7 +62,7 @@
             width: 150px;
         }
         .content {
-            margin: 30px 0;
+            margin: 20px 15px;
             text-align: justify;
         }
         .vobo {
@@ -72,31 +77,27 @@
             border-radius: 5px;
         }
         .firmas-container {
-            margin-top: 60px;
+            margin-top: 40px;
         }
         .firma-bloque {
             text-align: center;
             margin-top: 20px;
         }
         .firma-imagen {
-            max-width: 180px;
-            max-height: 80px;
+            max-width: 200px;
+            max-height: 120px;
             margin-bottom: 5px;
         }
-        .firma-linea {
-            width: 220px;
-            border-top: 1px solid #333;
-            margin: 10px auto;
-        }
+
         .firma-cargo {
             font-weight: bold;
-            font-size: 11pt;
-            margin-top: 5px;
+            font-size: 12pt;
+            margin-top: 3px;
         }
         .firma-nombre {
-            font-size: 10pt;
-            color: #666;
-            margin-top: 3px;
+            font-size: 12pt;            
+            margin-top: 5px;
+            color: #555;
         }
         .footer {
             position: fixed;
@@ -134,9 +135,10 @@
                     @endif
                 </td>
                 <td style="width: 70%; vertical-align: middle; text-align: right;">
-                    <div class="title">{{ $convocatoria->asunto }}</div>
-                    <div class="subtitle">{{ $convocatoria->temporada->temporada }}</div>
-                    <div class="subtitle">Nº {{ str_pad($convocatoria->convocatoria, 3, '0', STR_PAD_LEFT) }}/{{ $convocatoria->temporada->abreviatura }}</div>
+                    <div class="title">{{ $config->titulo }}</div>
+                    <div class="subtitle1">{{ $convocatoria->asunto }}</div>
+                    <div class="subtitle2">{{ $convocatoria->temporada->temporada }}</div>
+                    <div class="subtitle2">Nº {{ str_pad($convocatoria->convocatoria, 3, '0', STR_PAD_LEFT) }}/{{ $convocatoria->temporada->abreviatura }}</div>
                 </td>
             </tr>
         </table>
@@ -170,16 +172,39 @@
             <div style="display: table; width: 100%;">
                 <div style="display: table-cell; width: 48%; vertical-align: top;">
                     <div class="firma-bloque">
+                        <div class="firma-cargo">VºBº El Presidente</div>
                         {{-- Firma VºBº Presidente --}}
                         @if(file_exists(storage_path('app/firmas/presidente.png')))
                             <img src="{{ storage_path('app/firmas/presidente.png') }}" class="firma-imagen">
                         @else
                             <div style="height: 60px;"></div>
                         @endif
-                        <div class="firma-linea"></div>
-                        <div class="firma-cargo">VºBº El Presidente</div>
-                        @if(isset($config) && $config->nombre_presidente)
-                            <div class="firma-nombre">{{ $config->nombre_presidente }}</div>
+                        
+                        {{-- Buscar nombre del Presidente desde historial_cargos_directivos --}}
+                        @php
+                            // Buscar el cargo 'Presidente' en la tabla junta_directiva
+                            $cargoPresidente = \DB::table('junta_directiva')
+                                ->where('cargo', 'LIKE', '%President%')
+                                ->first();
+                            
+                            $presidente = null;
+                            if ($cargoPresidente) {
+                                // Buscar la persona que ocupa ese cargo en esta temporada
+                                $presidente = \DB::table('historial_cargos_directivos')
+                                    ->join('socios_personas', 'historial_cargos_directivos.a_persona', '=', 'socios_personas.Id_Persona')
+                                    ->where('historial_cargos_directivos.a_cargo', $cargoPresidente->id)
+                                    ->where('historial_cargos_directivos.a_temporada', $convocatoria->fk_temporadas)
+                                    ->select('socios_personas.Nombre', 'socios_personas.Apellidos')
+                                    ->first();
+                            }
+                        @endphp
+
+                        @if($presidente)
+                            <div class="firma-nombre">{{ $presidente->Apellidos }}, {{ $presidente->Nombre }}</div>
+                        @else
+                            <div class="firma-nombre" style="color: #ccc; font-style: italic;">
+                                (Presidente sin asignar)
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -196,10 +221,7 @@
                         @else
                             <div style="height: 60px;"></div>
                         @endif
-                        <div class="firma-linea"></div>
-                        <div class="firma-cargo">
-                            {{ $convocatoria->cargoFirmante ? $convocatoria->cargoFirmante->nombre_cargo : 'El Firmante' }}
-                        </div>
+                                                
                         @if($convocatoria->cargoFirmante)
                             {{-- Buscar el nombre de la persona que ocupa este cargo en la temporada actual --}}
                             @php
@@ -214,6 +236,11 @@
                                 <div class="firma-nombre">{{ $persona->Nombre }} {{ $persona->Apellidos }}</div>
                             @endif
                         @endif
+
+                        <div class="firma-cargo">
+                            {{ $convocatoria->cargoFirmante ? $convocatoria->cargoFirmante->cargo : 'El Firmante' }}
+                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -230,10 +257,7 @@
                     @else
                         <div style="height: 60px;"></div>
                     @endif
-                    <div class="firma-linea"></div>
-                    <div class="firma-cargo">
-                        {{ $convocatoria->cargoFirmante ? $convocatoria->cargoFirmante->nombre_cargo : 'El Firmante' }}
-                    </div>
+                                        
                     @if($convocatoria->cargoFirmante)
                         {{-- Buscar el nombre de la persona que ocupa este cargo en la temporada actual --}}
                         @php
@@ -246,8 +270,11 @@
                         @endphp
                         @if($persona)
                             <div class="firma-nombre">{{ $persona->Nombre }} {{ $persona->Apellidos }}</div>
-                        @endif
+                        @endif                        
                     @endif
+                    <div class="firma-cargo">
+                        {{ $convocatoria->cargoFirmante ? $convocatoria->cargoFirmante->nombre_cargo : 'El Firmante' }}
+                    </div>
                 </div>
             </div>
         @endif
@@ -255,10 +282,10 @@
 
     {{-- Footer --}}
     <div class="footer">
-        @if(isset($config) && $config->nombre_asociacion)
-            <p>{{ $config->nombre_asociacion }} - Documento generado el {{ now()->format('d/m/Y') }}</p>
+        @if(isset($config) && $config->titulo)
+            <p>Documento generado el {{ now()->format('d/m/Y H:m') }}  - {{ $config->titulo }} Convocatoria Nº {{ $convocatoria->convocatoria }}/{{ $convocatoria->temporada->abreviatura }}</p>
         @else
-            <p>Documento generado el {{ now()->format('d/m/Y') }} - Convocatoria {{ $convocatoria->convocatoria }}/{{ $convocatoria->temporada->abreviatura }}</p>
+            <p>Documento generado el {{ now()->format('d/m/Y H:m') }} - Convocatoria Nº {{ $convocatoria->convocatoria }}/{{ $convocatoria->temporada->abreviatura }}</p>
         @endif
     </div>
 </body>
