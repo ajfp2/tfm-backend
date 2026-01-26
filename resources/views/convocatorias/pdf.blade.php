@@ -6,7 +6,7 @@
     <title>Convocatoria {{ $convocatoria->convocatoria }}</title>
     <style>
         @page {
-            margin: 1.5cm;
+            margin: 0.7cm;
         }
         body {
             font-family: 'DejaVu Sans', sans-serif;
@@ -32,13 +32,13 @@
             display: block;
         }
         .title {
-            font-size: 18pt;
+            font-size: 16pt;
             font-weight: bold;
             margin: 5px 0 2px 0;
             text-transform: uppercase;
         }
         .subtitle1 {
-            font-size: 16pt;
+            font-size: 14pt;
             font-weight: bold;
             margin-bottom: 3px 0;
         }
@@ -61,21 +61,14 @@
             display: inline-block;
             width: 150px;
         }
+        .right {
+            text-align: right;
+        }
         .content {
             margin: 20px 15px;
             text-align: justify;
         }
-        .vobo {
-            position: absolute;
-            top: 2cm;
-            right: 2cm;
-            padding: 10px 20px;
-            border: 2px solid #4CAF50;
-            background-color: #E8F5E9;
-            font-weight: bold;
-            color: #2E7D32;
-            border-radius: 5px;
-        }
+
         .firmas-container {
             margin-top: 40px;
         }
@@ -84,8 +77,8 @@
             margin-top: 20px;
         }
         .firma-imagen {
-            max-width: 200px;
-            max-height: 120px;
+            max-width: 230px;
+            max-height: 150px;
             margin-bottom: 5px;
         }
 
@@ -101,7 +94,7 @@
         }
         .footer {
             position: fixed;
-            bottom: 1cm;
+            bottom: 0.4cm;
             width: 100%;
             text-align: center;
             font-size: 9pt;
@@ -148,11 +141,15 @@
     <div class="info-block">
         <div class="info-row">
             <span class="label">Fecha:</span>
-            <span>{{ \Carbon\Carbon::parse($convocatoria->fecha_junta)->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
+            <span class="right">{{ \Carbon\Carbon::parse($convocatoria->fecha_junta)->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
         </div>
         <div class="info-row">
             <span class="label">Hora:</span>
-            <span>{{ substr($convocatoria->hora1, 0, 5) }} a {{ substr($convocatoria->hora2, 0, 5) }} horas</span>
+            @if($convocatoria->hora1 && $convocatoria->hora2)
+                <span>A las {{ substr($convocatoria->hora1, 0, 5) }} horas en 1ª y a las {{ substr($convocatoria->hora2, 0, 5) }} horas en 2ª Convocatoria</span>
+            @else
+                <span>A las {{ substr($convocatoria->hora1, 0, 5) }} horas</span>
+            @endif
         </div>
         <div class="info-row">
             <span class="label">Lugar:</span>
@@ -217,6 +214,7 @@
                             $rutaFirma = storage_path('app/firmas/' . $nombreArchivo);
                         @endphp
                         @if(file_exists($rutaFirma))
+                            <!-- <img src="https://picsum.photos/300/300" class="firma-imagen"> -->
                             <img src="{{ $rutaFirma }}" class="firma-imagen">
                         @else
                             <div style="height: 60px;"></div>
