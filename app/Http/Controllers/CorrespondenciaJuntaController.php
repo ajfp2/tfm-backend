@@ -293,7 +293,7 @@ class CorrespondenciaJuntaController extends BaseController
      * Obtener convocatorias con PDF generado (para selector de envíos)
      * GET /api/convocatorias/con-pdf
      */
-    public function conPdf()
+    public function getConvocatoriasConPdf()
     {
         try {
             $convocatorias = CorrespondenciaJunta::with('temporada')

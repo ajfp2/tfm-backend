@@ -20,13 +20,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // CONVOCATORIAS DE JUNTAS
     // ============================================
     
-    // CRUD básico
-    Route::apiResource('convocatorias', CorrespondenciaJuntaController::class);
-    
     // Rutas especiales
     Route::prefix('convocatorias')->group(function () {
         // Obtener convocatorias con PDF generado
-        Route::get('con-pdf', [CorrespondenciaJuntaController::class, 'conPdf']);
+        Route::get('/con-pdf', [CorrespondenciaJuntaController::class, 'getConvocatoriasConPdf']);
         
         // Generar PDF
         Route::post('{id}/generar-pdf', [CorrespondenciaJuntaController::class, 'generarPdf']);
@@ -40,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Marcar como enviada
         Route::post('{id}/marcar-enviada', [CorrespondenciaJuntaController::class, 'marcarEnviada']);
     });
+
+    // CRUD básico
+    Route::apiResource('convocatorias', CorrespondenciaJuntaController::class);
 
     // ============================================
     // CORRESPONDENCIA (ENVÍOS)
