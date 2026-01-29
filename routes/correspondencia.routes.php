@@ -52,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('correspondencia')->group(function () {
         // Añadir destinatarios
         Route::post('{id}/destinatarios', [CorrespondenciaController::class, 'agregarDestinatarios']);
+        Route::post('{id}/destinatarios-old', [CorrespondenciaController::class, 'agregarDestinatarios_OLD']);
         
         // Enviar emails
         Route::post('{id}/enviar-emails', [CorrespondenciaController::class, 'enviarEmails']);

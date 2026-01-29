@@ -202,7 +202,100 @@ class CorrespondenciaController extends BaseController
      * Añadir destinatarios a la correspondencia
      * POST /api/correspondencia/{id}/destinatarios
      */
-    public function agregarDestinatarios(Request $request, $id)
+
+    public function agregarDestinatarios(Request $request, $id){
+        $validator = Validator::make($request->all(), [
+            'modo' => 'required|in:todos_activos,todos_baja,deudores_activos,deudores_baja,manual',
+            'socios_ids' => 'required_if:modo,manual|array',
+            'socios_ids.*' => 'integer|exists:socios_personas,id'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validación fallida', [$validator->errors()], 422);
+        }
+
+        try {
+            $correspondencia = Correspondencia::findOrFail($id);
+            $modo = $request->modo;
+
+            // Obtener socios según el modo
+            $socios = collect();
+            
+            switch ($modo) {
+                case 'todos_activos':
+                    // Todos los socios activos
+                    // $socios = \DB::table('socios_personas')->where('activo', true)->get();
+                    $socios = SocioPersona::with(['alta', 'municipio'])->whereHas('alta')->get();
+                break;
+                    
+                case 'todos_baja':
+                    // Todos los socios de baja
+                    // $socios = \DB::table('socios_personas')->where('activo', false)->get();
+                    $socios = SocioPersona::with(['baja', 'municipio'])->whereHas('baja')->get();
+                break;
+                    
+                case 'deudores_activos':
+                    // Socios deudores activos
+                    // Asumiendo que tienes una columna 'deudor' o similar
+                    // $socios = \DB::table('socios_personas')->where('activo', true)->where('deudor', true) // o tu lógica para determinar deudores->get();
+                    $socios = SocioPersona::with(['alta', 'municipio', 'historialAnual'])->whereHas('alta')->has('importe_pendiente', '>', 0)->get();
+                break;
+                    
+                case 'deudores_baja':
+                    // Socios deudores de baja
+                    // $socios = \DB::table('socios_personas')->where('activo', false)->where('deudor', true)->get();
+                    $socios = SocioPersona::with(['baja', 'municipio'])->where('deudor', true)->get();
+                break;
+                    
+                case 'manual':
+                    // Socios seleccionados manualmente
+                    $socios = \DB::table('socios_personas')->whereIn('id', $request->socios_ids)->get();
+                break;
+            }
+
+            // Insertar destinatarios
+            $insertados = 0;
+            foreach ($socios as $socio) {
+                // Verificar si ya existe como destinatario
+                $existe = \DB::table('detalle_correspondencia')
+                    ->where('fk_correspondencia', $correspondencia->id)
+                    ->where('fk_persona', $socio->id)
+                    ->exists();
+
+                if (!$existe) {
+                    // Determinar tipo de envío (email o papel)
+                    $papel = empty($socio->Email) || !filter_var($socio->Email, FILTER_VALIDATE_EMAIL);
+
+                    \DB::table('detalle_correspondencia')->insert([
+                        'fk_correspondencia' => $correspondencia->id,
+                        'fk_persona' => $socio->id,
+                        'papel' => $papel,
+                        'nombre' => $socio->Nombre,
+                        'apellidos' => $socio->Apellidos,
+                        'direccion' => $socio->Direccion ?? null,
+                        'cp' => $socio->CP ?? null,
+                        'poblacion' => $socio->Poblacion ?? null,
+                        'provincia' => $socio->Provincia ?? null,
+                        'pais' => $socio->Pais ?? null,
+                        'email' => $socio->Email ?? null,
+                        'realizado' => false,
+                        'fechaenvio' => null
+                    ]);
+                    $insertados++;
+                }
+            }
+
+            return $this->sendResponse([
+                'total_socios' => $socios->count(),
+                'insertados' => $insertados,
+                'duplicados' => $socios->count() - $insertados
+            ], "Se añadieron $insertados destinatarios correctamente");
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error al añadir destinatarios', ['error' => $e->getMessage()], 500);
+        }
+    }
+    public function agregarDestinatarios_OLD(Request $request, $id)
     {
         try {
             $correspondencia = Correspondencia::findOrFail($id);
@@ -214,7 +307,7 @@ class CorrespondenciaController extends BaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Error de validación', $validator->errors(), 422);
+                return $this->sendError('Error de validación', [$validator->errors()], 422);
             }
 
             // Eliminar destinatarios anteriores
