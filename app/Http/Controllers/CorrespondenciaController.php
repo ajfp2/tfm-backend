@@ -446,9 +446,10 @@ class CorrespondenciaController extends BaseController
 
             // Cargar configuración para logo y datos
             $config = \App\Models\Configuracion::first();
+            $penya = \App\Models\Penya::first();
 
             // Generar PDF con todas las cartas
-            $pdf = Pdf::loadView('correspondencia.cartas-pdf', compact('correspondencia', 'config'));
+            $pdf = Pdf::loadView('correspondencia.cartas-pdf', compact('correspondencia', 'config', 'penya'));
 
             $filename = 'cartas_' . $id . '_' . time() . '.pdf';
             
@@ -457,33 +458,7 @@ class CorrespondenciaController extends BaseController
             return $this->sendError('Error al generar PDF de cartas', ['error' => $e->getMessage()], 500);
         }
     }
-    public function generarCartasPdf_OK($id)
-    {
-        try {
-            $correspondencia = Correspondencia::with([
-                'cargoFirmante',
-                'destinatarios' => function($query) {
-                    $query->porPapel();
-                }
-            ])->findOrFail($id);
-
-            $config = \App\Models\Configuracion::first();
-
-            if ($correspondencia->destinatarios->isEmpty()) {
-                return $this->sendError('No hay destinatarios de papel', [], 404);
-            }
-
-            // Generar PDF con todas las cartas
-            $pdf = Pdf::loadView('cartas-pdf', compact('correspondencia', 'config'));
-            //$pdf = Pdf::loadView('convocatorias.pdf', compact('convocatoria', 'config'));
-
-            $filename = 'cartas_' . $id . '_' . time() . '.pdf';
-            
-            return $pdf->download($filename);
-        } catch (\Exception $e) {
-            return $this->sendError('Error al generar PDF de cartas', ['error' => $e->getMessage()], 500);
-        }
-    }
+    
 
     /**
      * Marcar cartas de papel como impresas

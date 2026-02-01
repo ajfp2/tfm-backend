@@ -6,7 +6,7 @@
     <title>Cartas de Correspondencia</title>
     <style>
         @page {
-            margin: 2cm;
+            margin: 0.7cm;
         }
         body {
             font-family: 'DejaVu Sans', sans-serif;
@@ -109,11 +109,12 @@
                 @else
                     <strong>ASOCIACIÓN</strong><br>
                 @endif
-                @if(isset($config))
-                    @if($config->direccion){{ $config->direccion }}<br>@endif
-                    @if($config->cp || $config->poblacion){{ $config->cp }} {{ $config->poblacion }}<br>@endif
-                    @if($config->telefono)Tel: {{ $config->telefono }}<br>@endif
-                    @if($config->email)Email: {{ $config->email }}@endif
+                Direcció-n
+                @if(isset($penya))
+                    @if($penya->direccion){{ $penya->direccion }}<br>@endif
+                    @if($penya->cp || $penya->localidad){{ $penya->cp }}, {{ $penya->localidad }}<br>@endif
+                    @if($penya->telefono)Tel: {{ $penya->telefono }}<br>@endif
+                    @if($penya->email)Email: {{ $penya->email }}@endif
                 @endif
             </div>
         </div>
