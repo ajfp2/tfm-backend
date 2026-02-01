@@ -204,11 +204,14 @@ class CorrespondenciaController extends BaseController
      */
 
     public function agregarDestinatarios(Request $request, $id){
+        // \Log::info('Valor ID: ' . $id);
         $validator = Validator::make($request->all(), [
-            'modo' => 'required|in:todos_activos,todos_baja,deudores_activos,deudores_baja,manual',
+            'tipo' => 'required|in:todos_activos,todos_baja,deudores_activos,deudores_baja,manual',
             'socios_ids' => 'required_if:modo,manual|array',
-            'socios_ids.*' => 'integer|exists:socios_personas,id'
+            'socios_ids.*' => 'integer|exists:socios_personas,Id_Persona'
         ]);
+
+        if(!$id) return $this->sendError('Validación fallida ', ["id" => $id, "param" => $request], 422);
 
         if ($validator->fails()) {
             return $this->sendError('Validación fallida', [$validator->errors()], 422);
@@ -216,7 +219,7 @@ class CorrespondenciaController extends BaseController
 
         try {
             $correspondencia = Correspondencia::findOrFail($id);
-            $modo = $request->modo;
+            $modo = $request->tipo;
 
             // Obtener socios según el modo
             $socios = collect();
@@ -249,7 +252,7 @@ class CorrespondenciaController extends BaseController
                     
                 case 'manual':
                     // Socios seleccionados manualmente
-                    $socios = \DB::table('socios_personas')->whereIn('id', $request->socios_ids)->get();
+                    $socios = \DB::table('socios_personas')->whereIn('Id_Persona', $request->socios_ids)->get();
                 break;
             }
 
@@ -257,18 +260,18 @@ class CorrespondenciaController extends BaseController
             $insertados = 0;
             foreach ($socios as $socio) {
                 // Verificar si ya existe como destinatario
-                $existe = \DB::table('detalle_correspondencia')
+                $existe = \DB::table('correspondencia_detallecorrespondencia')
                     ->where('fk_correspondencia', $correspondencia->id)
-                    ->where('fk_persona', $socio->id)
+                    ->where('fk_persona', $socio->Id_Persona)
                     ->exists();
 
                 if (!$existe) {
                     // Determinar tipo de envío (email o papel)
                     $papel = empty($socio->Email) || !filter_var($socio->Email, FILTER_VALIDATE_EMAIL);
 
-                    \DB::table('detalle_correspondencia')->insert([
+                    \DB::table('correspondencia_detallecorrespondencia')->insert([
                         'fk_correspondencia' => $correspondencia->id,
-                        'fk_persona' => $socio->id,
+                        'fk_persona' => $socio->Id_Persona,
                         'papel' => $papel,
                         'nombre' => $socio->Nombre,
                         'apellidos' => $socio->Apellidos,
@@ -423,7 +426,38 @@ class CorrespondenciaController extends BaseController
      * Generar PDF para imprimir cartas
      * GET /api/correspondencia/{id}/generar-cartas-pdf
      */
+    /**
+ * Generar PDF con cartas para papel
+ * GET /api/correspondencia/{id}/generar-cartas-pdf
+ */
     public function generarCartasPdf($id)
+    {
+        try {
+            $correspondencia = Correspondencia::with([
+                'cargoFirmante',
+                'destinatarios' => function($query) {
+                    $query->where('papel', true);
+                }
+            ])->findOrFail($id);
+
+            if ($correspondencia->destinatarios->isEmpty()) {
+                return $this->sendError('No hay destinatarios de papel', [], 404);
+            }
+
+            // Cargar configuración para logo y datos
+            $config = \App\Models\Configuracion::first();
+
+            // Generar PDF con todas las cartas
+            $pdf = Pdf::loadView('correspondencia.cartas-pdf', compact('correspondencia', 'config'));
+
+            $filename = 'cartas_' . $id . '_' . time() . '.pdf';
+            
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            return $this->sendError('Error al generar PDF de cartas', ['error' => $e->getMessage()], 500);
+        }
+    }
+    public function generarCartasPdf_OK($id)
     {
         try {
             $correspondencia = Correspondencia::with([
@@ -433,12 +467,15 @@ class CorrespondenciaController extends BaseController
                 }
             ])->findOrFail($id);
 
+            $config = \App\Models\Configuracion::first();
+
             if ($correspondencia->destinatarios->isEmpty()) {
                 return $this->sendError('No hay destinatarios de papel', [], 404);
             }
 
             // Generar PDF con todas las cartas
-            $pdf = Pdf::loadView('correspondencia.cartas-pdf', compact('correspondencia'));
+            $pdf = Pdf::loadView('cartas-pdf', compact('correspondencia', 'config'));
+            //$pdf = Pdf::loadView('convocatorias.pdf', compact('convocatoria', 'config'));
 
             $filename = 'cartas_' . $id . '_' . time() . '.pdf';
             

@@ -87,15 +87,34 @@
     <div class="carta">
         {{-- Membrete --}}
         <div class="header">
-            {{-- Logo (opcional) --}}
-            {{-- <img src="{{ public_path('images/logo.png') }}" alt="Logo" class="logo"> --}}
+            {{-- Logo de configuración --}}
+            @if(isset($config) && $config->logo)
+                @php
+                    if (str_starts_with($config->logo, 'http')) {
+                        $parts = explode('/storage/', $config->logo);
+                        $logoRelativePath = end($parts);
+                    } else {
+                        $logoRelativePath = $config->logo;
+                    }
+                    $logoPath = storage_path('app/public/' . $logoRelativePath);
+                @endphp
+                @if(file_exists($logoPath))
+                    <img src="{{ $logoPath }}" alt="Logo" class="logo">
+                @endif
+            @endif
             
             <div class="asociacion-datos">
-                <strong>ASOCIACIÓN [NOMBRE DE LA ASOCIACIÓN]</strong><br>
-                C/ Ejemplo, 123<br>
-                03000 Alicante<br>
-                Tel: 965 123 456<br>
-                Email: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c4adaaa2ab84a5b7aba7ada5a7adabaaeaa7aba9">[email&#160;protected]</a>
+                @if(isset($config) && $config->titulo)
+                    <strong>{{ strtoupper($config->titulo) }}</strong><br>
+                @else
+                    <strong>ASOCIACIÓN</strong><br>
+                @endif
+                @if(isset($config))
+                    @if($config->direccion){{ $config->direccion }}<br>@endif
+                    @if($config->cp || $config->poblacion){{ $config->cp }} {{ $config->poblacion }}<br>@endif
+                    @if($config->telefono)Tel: {{ $config->telefono }}<br>@endif
+                    @if($config->email)Email: {{ $config->email }}@endif
+                @endif
             </div>
         </div>
 
@@ -107,7 +126,7 @@
         {{-- Destinatario --}}
         <div class="destinatario">
             <div class="destinatario-nombre">
-                {{ $destinatario->nombre_completo }}
+                {{ $destinatario->nombre }} {{ $destinatario->apellidos }}
             </div>
             <div class="destinatario-direccion">
                 @if($destinatario->direccion)
@@ -151,6 +170,9 @@
                         @endif
                         <div style="border-top: 1px solid #333; width: 150px; margin: 10px auto;"></div>
                         <div style="font-weight: bold; font-size: 9pt;">VºBº El Presidente</div>
+                        @if(isset($config) && $config->nombre_presidente)
+                            <div style="font-size: 8pt; color: #666;">{{ $config->nombre_presidente }}</div>
+                        @endif
                     </div>
                     <div style="display: table-cell; width: 4%;"></div>
                     <div style="display: table-cell; width: 48%; vertical-align: top; text-align: center;">
@@ -165,35 +187,79 @@
                             <div style="height: 50px;"></div>
                         @endif
                         <div style="border-top: 1px solid #333; width: 150px; margin: 10px auto;"></div>
-                        <div style="font-weight: bold; font-size: 9pt;">
+                        
+                        {{-- Nombre de la persona que firma --}}
+                        @php
+                            $persona = \DB::table('historial_cargos_directivos')
+                                ->join('socios_personas', 'historial_cargos_directivos.a_persona', '=', 'socios_personas.Id_Persona')
+                                ->where('historial_cargos_directivos.a_cargo', $correspondencia->firma_cargo)
+                                ->where('historial_cargos_directivos.a_temporada', $correspondencia->fk_temporadas)
+                                ->select('socios_personas.Nombre', 'socios_personas.Apellidos')
+                                ->first();
+                        @endphp
+                        @if($persona)
+                            <div style="font-size: 9pt; color: #666;">{{ $persona->Nombre }} {{ $persona->Apellidos }}</div>
+                        @endif
+                        
+                        {{-- Cargo --}}
+                        <div style="font-weight: bold; font-size: 9pt; margin-top: 3px;">
                             {{ $correspondencia->cargoFirmante ? $correspondencia->cargoFirmante->nombre_cargo : 'El Firmante' }}
                         </div>
                     </div>
                 </div>
             @else
                 {{-- Una sola firma: Cargo firmante (derecha) --}}
-                <div class="firma">
-                    @php
-                        $nombreArchivo = 'firma_cargo_' . $correspondencia->firma_cargo . '.png';
-                        $rutaFirma = storage_path('app/firmas/' . $nombreArchivo);
-                    @endphp
-                    @if(file_exists($rutaFirma))
-                        <img src="{{ $rutaFirma }}" style="max-width: 120px; max-height: 60px; margin-bottom: 10px;">
-                    @endif
-                    <div class="firma-linea"></div>
-                    <div style="font-size: 10pt;">
-                        {{ $correspondencia->cargoFirmante ? $correspondencia->cargoFirmante->nombre_cargo : 'El Firmante' }}
+                <div class="firma" style="text-align: right;">
+                    <div style="display: inline-block; text-align: center;">
+                        @php
+                            $nombreArchivo = 'firma_cargo_' . $correspondencia->firma_cargo . '.png';
+                            $rutaFirma = storage_path('app/firmas/' . $nombreArchivo);
+                        @endphp
+                        @if(file_exists($rutaFirma))
+                            <img src="{{ $rutaFirma }}" style="max-width: 120px; max-height: 60px; margin-bottom: 10px;">
+                        @else
+                            <div style="height: 50px;"></div>
+                        @endif
+                        <div style="border-top: 1px solid #333; width: 150px; margin: 10px auto;"></div>
+                        
+                        {{-- Nombre de la persona --}}
+                        @php
+                            $persona = \DB::table('historial_cargos_directivos')
+                                ->join('socios_personas', 'historial_cargos_directivos.fk_persona', '=', 'socios_personas.id')
+                                ->where('historial_cargos_directivos.fk_cargo', $correspondencia->firma_cargo)
+                                ->where('historial_cargos_directivos.fk_temporada', $correspondencia->fk_temporadas)
+                                ->select('socios_personas.Nombre', 'socios_personas.Apellidos')
+                                ->first();
+                        @endphp
+                        @if($persona)
+                            <div style="font-size: 9pt; color: #666;">{{ $persona->Nombre }} {{ $persona->Apellidos }}</div>
+                        @endif
+                        
+                        {{-- Cargo --}}
+                        <div style="font-weight: bold; font-size: 10pt; margin-top: 3px;">
+                            {{ $correspondencia->cargoFirmante ? $correspondencia->cargoFirmante->nombre_cargo : 'El Firmante' }}
+                        </div>
                     </div>
                 </div>
             @endif
         @else
             {{-- Sin firma personalizada, solo texto genérico --}}
-            <div class="firma">
-                <div class="firma-linea"></div>
-                <div>La Junta Directiva</div>
+            <div class="firma" style="text-align: right;">
+                <div style="display: inline-block;">
+                    <div class="firma-linea"></div>
+                    <div style="text-align: center;">La Junta Directiva</div>
+                </div>
             </div>
         @endif
 
         {{-- Pie de página --}}
         <div class="pie">
-            Carta {{ $index + 1 }} de {{ $correspondencia->destinatarios
+            Carta {{ $index + 1 }} de {{ $correspondencia->destinatarios->count() }}
+            @if(isset($config) && $config->titulo)
+                - {{ $config->titulo }}
+            @endif
+        </div>
+    </div>
+    @endforeach
+</body>
+</html>

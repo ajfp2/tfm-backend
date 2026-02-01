@@ -45,11 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // CORRESPONDENCIA (ENVÍOS)
     // ============================================
     
-    // CRUD básico
-    Route::apiResource('correspondencia', CorrespondenciaController::class);
-    
     // Rutas especiales
     Route::prefix('correspondencia')->group(function () {
+        // Histórico de envíos
+        Route::get('historico', [CorrespondenciaController::class, 'historico']);
         // Añadir destinatarios
         Route::post('{id}/destinatarios', [CorrespondenciaController::class, 'agregarDestinatarios']);
         Route::post('{id}/destinatarios-old', [CorrespondenciaController::class, 'agregarDestinatarios_OLD']);
@@ -62,10 +61,10 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Marcar cartas como impresas
         Route::post('{id}/marcar-impresas', [CorrespondenciaController::class, 'marcarImpresas']);
-        
-        // Histórico de envíos
-        Route::get('historico', [CorrespondenciaController::class, 'historico']);
     });
+
+    // CRUD básico
+    Route::apiResource('correspondencia', CorrespondenciaController::class);
 
     // ============================================
     // TEMPORADAS (si no están ya definidas)
