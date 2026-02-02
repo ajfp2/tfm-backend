@@ -298,65 +298,6 @@ class CorrespondenciaController extends BaseController
             return $this->sendError('Error al añadir destinatarios', ['error' => $e->getMessage()], 500);
         }
     }
-    public function agregarDestinatarios_OLD(Request $request, $id)
-    {
-        try {
-            $correspondencia = Correspondencia::findOrFail($id);
-
-            $validator = Validator::make($request->all(), [
-                'tipo' => 'required|in:todos,manual',
-                'socios' => 'required_if:tipo,manual|array',
-                'socios.*' => 'exists:socios_personas,Id_Persona'
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError('Error de validación', [$validator->errors()], 422);
-            }
-
-            // Eliminar destinatarios anteriores
-            $correspondencia->destinatarios()->delete();
-
-            // Obtener socios
-            $sociosQuery = SocioPersona::with(['alta', 'municipio']);
-            
-            if ($request->tipo === 'manual') {
-                $sociosQuery->whereIn('Id_Persona', $request->socios);
-            } else {
-                // Todos los socios activos
-                $sociosQuery->whereHas('alta');
-            }
-
-            $socios = $sociosQuery->get();
-
-            // Crear destinatarios
-            foreach ($socios as $socio) {
-                DetalleCorrespondencia::create([
-                    'fk_correspondencia' => $correspondencia->id,
-                    'fk_persona' => $socio->Id_Persona,
-                    'papel' => empty($socio->Email) ? 1 : 0, // 1 si no tiene email
-                    'nombre' => $socio->Nombre,
-                    'apellidos' => $socio->Apellidos,
-                    'direccion' => $socio->Direccion,
-                    'cp' => $socio->CP,
-                    'poblacion' => $socio->municipio->municipio ?? null,
-                    'provincia' => $socio->Provincia,
-                    'pais' => $socio->Pais,
-                    'email' => $socio->Email,
-                    'realizado' => 0
-                ]);
-            }
-
-            $correspondencia->load('destinatarios');
-
-            return $this->sendResponse([
-                'correspondencia' => $correspondencia,
-                'total_email' => $correspondencia->totalEmail(),
-                'total_papel' => $correspondencia->totalPapel()
-            ], 'Destinatarios añadidos correctamente');
-        } catch (\Exception $e) {
-            return $this->sendError('Error al añadir destinatarios', ['error' => $e->getMessage()], 500);
-        }
-    }
 
     /**
      * Enviar correspondencia por email

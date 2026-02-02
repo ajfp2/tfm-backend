@@ -23,22 +23,26 @@
         }
         .header {
             margin-bottom: 30px;
+            border-bottom: 2px solid #333;
         }
         .logo {
-            max-width: 120px;
-            margin-bottom: 15px;
+            max-width: 150px;
+            max-height: 100px;
+            display: block;
         }
         .asociacion-datos {
             font-size: 9pt;
             color: #666;
-            line-height: 1.4;
-        }
-        .fecha {
+            line-height: 1.5;
             text-align: right;
-            margin: 20px 0;
-            font-size: 10pt;
         }
+        .asociacion-datos strong {
+            font-size: 10pt;
+            color: #333;
+        }
+        
         .destinatario {
+            text-align: right;
             margin: 30px 0 40px 0;
             min-height: 100px;
         }
@@ -49,6 +53,12 @@
         .destinatario-direccion {
             margin-top: 5px;
             line-height: 1.4;
+        }
+
+        .fecha {
+            text-align: right;
+            margin: 20px 0;
+            font-size: 10pt;
         }
         .asunto {
             margin: 20px 0;
@@ -70,6 +80,11 @@
             border-top: 1px solid #333;
             margin: 50px 0 10px 0;
         }
+        .firma-imagen {
+            max-width: 230px;
+            max-height: 150px;
+            margin-bottom: 5px;
+        }
         .pie {
             position: fixed;
             bottom: 1cm;
@@ -87,47 +102,58 @@
     <div class="carta">
         {{-- Membrete --}}
         <div class="header">
-            {{-- Logo de configuración --}}
-            @if(isset($config) && $config->logo)
-                @php
-                    if (str_starts_with($config->logo, 'http')) {
-                        $parts = explode('/storage/', $config->logo);
-                        $logoRelativePath = end($parts);
-                    } else {
-                        $logoRelativePath = $config->logo;
-                    }
-                    $logoPath = storage_path('app/public/' . $logoRelativePath);
-                @endphp
-                @if(file_exists($logoPath))
-                    <img src="{{ $logoPath }}" alt="Logo" class="logo">
-                @endif
-            @endif
-            
-            <div class="asociacion-datos">
-                @if(isset($config) && $config->titulo)
-                    <strong>{{ strtoupper($config->titulo) }}</strong><br>
-                @else
-                    <strong>ASOCIACIÓN</strong><br>
-                @endif
-                Direcció-n
-                @if(isset($penya))
-                    @if($penya->direccion){{ $penya->direccion }}<br>@endif
-                    @if($penya->cp || $penya->localidad){{ $penya->cp }}, {{ $penya->localidad }}<br>@endif
-                    @if($penya->telefono)Tel: {{ $penya->telefono }}<br>@endif
-                    @if($penya->email)Email: {{ $penya->email }}@endif
-                @endif
-            </div>
-        </div>
-
-        {{-- Fecha --}}
-        <div class="fecha">
-            {{ \Carbon\Carbon::parse($correspondencia->creado)->locale('es')->isoFormat('D [de] MMMM [de] YYYY') }}
-        </div>
+            <table style="width: 100%; border: none; border-collapse: collapse;">
+                <tr>
+                    <td style="width: 40%; vertical-align: top; padding: 0; border: none;">
+                        {{-- Logo a la izquierda --}}
+                        @if(isset($config) && $config->logo)
+                            @php
+                                if (str_starts_with($config->logo, 'http')) {
+                                    $parts = explode('/storage/', $config->logo);
+                                    $logoRelativePath = end($parts);
+                                } else {
+                                    $logoRelativePath = $config->logo;
+                                }
+                                $logoPath = storage_path('app/public/' . $logoRelativePath);
+                            @endphp
+                            @if(file_exists($logoPath))
+                                <img src="{{ $logoPath }}" alt="Logo" class="logo">
+                            @endif
+                        @endif
+                    </td>
+                    <td style="width: 60%; vertical-align: top; text-align: right; padding: 0; border: none;">
+                        {{-- Datos de la penya a la derecha --}}
+                        <div class="asociacion-datos">
+                            @if(isset($penya))
+                                @if($penya->nombre)
+                                    <strong>{{ strtoupper($penya->nombre) }}</strong><br>
+                                @endif
+                                @if($penya->direccion){{ $penya->direccion }}<br>@endif
+                                @if($penya->CP || $penya->localidad){{ $penya->cp }} {{ $penya->localidad }}<br>@endif
+                                @if($penya->provincia){{ $penya->provincia }}<br>@endif
+                                @if($penya->telefono)Tel: {{ $penya->telefono }}<br>@endif
+                                @if($penya->email)Email: {{ $penya->email }}@endif
+                            @elseif(isset($config))
+                                @if($config->titulo)
+                                    <strong>{{ strtoupper($config->titulo) }}</strong><br>
+                                @endif
+                                @if($config->direccion){{ $config->direccion }}<br>@endif
+                                @if($config->cp || $config->localidad){{ $config->cp }} {{ $config->localidad }}<br>@endif
+                                @if($config->telefono)Tel: {{ $config->telefono }}<br>@endif
+                                @if($config->email)Email: {{ $config->email }}@endif
+                            @else
+                                <strong>ASOCIACIÓN</strong>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>        
 
         {{-- Destinatario --}}
         <div class="destinatario">
             <div class="destinatario-nombre">
-                {{ $destinatario->nombre }} {{ $destinatario->apellidos }}
+                {{ $destinatario->apellidos }}, {{ $destinatario->nombre }}
             </div>
             <div class="destinatario-direccion">
                 @if($destinatario->direccion)
@@ -137,9 +163,15 @@
                     {{ $destinatario->cp }} {{ $destinatario->poblacion }}<br>
                 @endif
                 @if($destinatario->provincia)
-                    {{ $destinatario->provincia }}
+                    {{ $destinatario->provincia }}, {{ $destinatario->pais }}
                 @endif
             </div>
+        </div>
+
+        {{-- Fecha --}}
+        <div class="fecha">
+            @if($penya->localidad){{ $penya->localidad }} a @endif 
+            {{ \Carbon\Carbon::parse($correspondencia->creado)->locale('es')->isoFormat('dddd, D [de] MMMM [de] YYYY') }}            
         </div>
 
         {{-- Asunto --}}
@@ -163,19 +195,44 @@
                 {{-- Dos firmas: VºBº Presidente (izquierda) + Cargo firmante (derecha) --}}
                 <div style="display: table; width: 100%; margin-top: 40px;">
                     <div style="display: table-cell; width: 48%; vertical-align: top; text-align: center;">
+                        <div style="font-weight: bold; font-size: 9pt; margin-bottom: 10px;">VºBº El Presidente</div>
                         {{-- VºBº Presidente --}}
                         @if(file_exists(storage_path('app/firmas/presidente.png')))
-                            <img src="{{ storage_path('app/firmas/presidente.png') }}" style="max-width: 120px; max-height: 60px; margin-bottom: 10px;">
+                            <img src="{{ storage_path('app/firmas/presidente.png') }}" class="firma-imagen">
                         @else
-                            <div style="height: 50px;"></div>
+                            <div style="height: 60px;"></div>
                         @endif
-                        <div style="border-top: 1px solid #333; width: 150px; margin: 10px auto;"></div>
-                        <div style="font-weight: bold; font-size: 9pt;">VºBº El Presidente</div>
-                        @if(isset($config) && $config->nombre_presidente)
-                            <div style="font-size: 8pt; color: #666;">{{ $config->nombre_presidente }}</div>
-                        @endif
+                        <!-- <div style="border-top: 1px solid #333; width: 150px; margin: 10px auto;"></div> -->
+                        
+                        {{-- Buscar nombre del Presidente desde historial_cargos_directivos --}}
+                        @php
+                            // Buscar el cargo 'Presidente' en la tabla junta_directiva
+                            $cargoPresidente = \DB::table('junta_directiva')
+                                ->where('cargo', 'LIKE', '%President%')
+                                ->first();
+                            
+                            $presidente = null;
+                            if ($cargoPresidente) {
+                                // Buscar la persona que ocupa ese cargo en esta temporada
+                                $presidente = \DB::table('historial_cargos_directivos')
+                                    ->join('socios_personas', 'historial_cargos_directivos.a_persona', '=', 'socios_personas.Id_Persona')
+                                    ->where('historial_cargos_directivos.a_cargo', $cargoPresidente->id)
+                                    ->where('historial_cargos_directivos.a_temporada', $correspondencia->fk_temporadas)
+                                    ->select('socios_personas.Nombre', 'socios_personas.Apellidos')
+                                    ->first();
+                            }
+                        @endphp
+                        @if($presidente)
+                            <div style="font-size: 9pt; color: #666;">{{ $presidente->Apellidos }}, {{ $presidente->Nombre }}</div>
+                        @else
+                            <div style="color: #ccc; font-style: italic;">
+                                (Presidente sin asignar)
+                            </div>
+                        @endif                    
                     </div>
+
                     <div style="display: table-cell; width: 4%;"></div>
+
                     <div style="display: table-cell; width: 48%; vertical-align: top; text-align: center;">
                         {{-- Cargo firmante --}}
                         @php
@@ -183,11 +240,11 @@
                             $rutaFirma = storage_path('app/firmas/' . $nombreArchivo);
                         @endphp
                         @if(file_exists($rutaFirma))
-                            <img src="{{ $rutaFirma }}" style="max-width: 120px; max-height: 60px; margin-bottom: 10px;">
+                            <img src="{{ $rutaFirma }}" class="firma-imagen">
                         @else
-                            <div style="height: 50px;"></div>
+                            <div style="height: 60px;"></div>
                         @endif
-                        <div style="border-top: 1px solid #333; width: 150px; margin: 10px auto;"></div>
+                        <!-- <div style="border-top: 1px solid #333; width: 150px; margin: 10px auto;"></div> -->
                         
                         {{-- Nombre de la persona que firma --}}
                         @php
@@ -199,12 +256,12 @@
                                 ->first();
                         @endphp
                         @if($persona)
-                            <div style="font-size: 9pt; color: #666;">{{ $persona->Nombre }} {{ $persona->Apellidos }}</div>
+                            <div style="font-size: 9pt; color: #666;">{{ $persona->Apellidos }}, {{ $persona->Nombre }}</div>
                         @endif
                         
                         {{-- Cargo --}}
                         <div style="font-weight: bold; font-size: 9pt; margin-top: 3px;">
-                            {{ $correspondencia->cargoFirmante ? $correspondencia->cargoFirmante->nombre_cargo : 'El Firmante' }}
+                            {{ $correspondencia->cargoFirmante ? $correspondencia->cargoFirmante->cargo : 'El Firmante' }}
                         </div>
                     </div>
                 </div>
@@ -217,7 +274,7 @@
                             $rutaFirma = storage_path('app/firmas/' . $nombreArchivo);
                         @endphp
                         @if(file_exists($rutaFirma))
-                            <img src="{{ $rutaFirma }}" style="max-width: 120px; max-height: 60px; margin-bottom: 10px;">
+                            <img src="{{ $rutaFirma }}" class="firma-imagen">
                         @else
                             <div style="height: 50px;"></div>
                         @endif
@@ -233,12 +290,12 @@
                                 ->first();
                         @endphp
                         @if($persona)
-                            <div style="font-size: 9pt; color: #666;">{{ $persona->Nombre }} {{ $persona->Apellidos }}</div>
+                            <div style="font-size: 9pt; color: #666;">{{ $persona->Apellidos }}, {{ $persona->Nombre }}</div>
                         @endif
                         
                         {{-- Cargo --}}
                         <div style="font-weight: bold; font-size: 10pt; margin-top: 3px;">
-                            {{ $correspondencia->cargoFirmante ? $correspondencia->cargoFirmante->nombre_cargo : 'El Firmante' }}
+                            {{ $correspondencia->cargoFirmante ? $correspondencia->cargoFirmante->cargo : 'El Firmante' }}
                         </div>
                     </div>
                 </div>
@@ -256,8 +313,8 @@
         {{-- Pie de página --}}
         <div class="pie">
             Carta {{ $index + 1 }} de {{ $correspondencia->destinatarios->count() }}
-            @if(isset($config) && $config->titulo)
-                - {{ $config->titulo }}
+            @if(isset($config) && $config->nombre_asociacion)
+                - {{ $config->nombre_asociacion }}
             @endif
         </div>
     </div>
