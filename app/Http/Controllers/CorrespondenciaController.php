@@ -351,7 +351,7 @@ class CorrespondenciaController extends BaseController
 
             // Actualizar fecha de envío de la correspondencia
             if ($enviados > 0) {
-                $correspondencia->update(['diaenvio' => now()]);
+                $correspondencia->update(['diaenvio' => now(), 'estadofinalizado' => true]);
             }
 
             return $this->sendResponse([
