@@ -311,55 +311,59 @@ class CorrespondenciaController extends BaseController
             if (!$correspondencia->rutafichero || !Storage::exists($correspondencia->rutafichero)) {
                 return $this->sendError('No hay archivo adjunto', [], 400);
             }
-
             $destinatariosEmail = $correspondencia->destinatarios()->porEmail()->pendientes()->get();
+            // $destinatariosEmail = $correspondencia->destinatarios()->where('papel', false)->where('realizado', false)->get();
+
+            if ($destinatariosEmail->isEmpty()) {
+                return $this->sendError('No hay destinatarios de email pendientes', [], 400);
+            }
 
             $enviados = 0;
             $errores = [];
+            $archivoPath = Storage::path($correspondencia->rutafichero);
 
             foreach ($destinatariosEmail as $destinatario) {
                 try {
-                    // Enviar email
-                    Mail::send([], [], function ($message) use ($correspondencia, $destinatario) {
-                        $message->to($destinatario->email)
-                            ->subject($correspondencia->asunto)
-                            ->setBody($correspondencia->texto, 'text/html')
-                            ->attach(Storage::path($correspondencia->rutafichero));
-                    });
+                    // Enviar email usando Mailable
+                    Mail::to($destinatario->email)->send(
+                        new \App\Mail\CorrespondenciaEmail(
+                            $correspondencia->asunto,
+                            $correspondencia->texto,
+                            $archivoPath
+                        )
+                    );
 
                     // Marcar como realizado
                     $destinatario->update([
-                        'realizado' => 1,
+                        'realizado' => true,
                         'fechaenvio' => now()
                     ]);
 
                     $enviados++;
                 } catch (\Exception $e) {
                     $errores[] = [
-                        'destinatario' => $destinatario->nombre_completo,
+                        'destinatario' => $destinatario->email,
                         'email' => $destinatario->email,
                         'error' => $e->getMessage()
                     ];
                 }
             }
 
-            // Actualizar estado si todos fueron enviados
-            if ($enviados > 0 && count($errores) === 0 && $correspondencia->totalPapel() === 0) {
-                $correspondencia->update([
-                    'estadofinalizado' => 1,
-                    'diaenvio' => now()
-                ]);
+            // Actualizar fecha de envío de la correspondencia
+            if ($enviados > 0) {
+                $correspondencia->update(['diaenvio' => now()]);
             }
 
             return $this->sendResponse([
                 'enviados' => $enviados,
                 'errores' => $errores,
-                'total_email' => $correspondencia->totalEmail(),
-                'pendientes_email' => $correspondencia->destinatarios()->porEmail()->pendientes()->count(),
-                'pendientes_papel' => $correspondencia->totalPapel()
-            ], 'Envío de emails completado');
+                'total' => $destinatariosEmail->count()
+            ], "Se enviaron $enviados emails correctamente");
+
         } catch (\Exception $e) {
-            return $this->sendError('Error al enviar emails', ['error' => $e->getMessage()], 500);
+            return $this->sendError('Error al enviar emails', [
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
