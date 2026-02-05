@@ -206,7 +206,7 @@ class CorrespondenciaController extends BaseController
     public function agregarDestinatarios(Request $request, $id){
         // \Log::info('Valor ID: ' . $id);
         $validator = Validator::make($request->all(), [
-            'tipo' => 'required|in:todos_activos,todos_baja,deudores_activos,deudores_baja,manual',
+            'tipo' => 'required|in:todos_activos,todos_baja,deudores_activos,deudores_baja,directiva,manual',
             'socios_ids' => 'required_if:modo,manual|array',
             'socios_ids.*' => 'integer|exists:socios_personas,Id_Persona'
         ]);
@@ -223,6 +223,13 @@ class CorrespondenciaController extends BaseController
 
             // Obtener socios según el modo
             $socios = collect();
+
+            $queryBase = \DB::table('socios_personas')
+            ->leftJoin('socios_municipios', 'socios_personas.Poblacion', '=', 'socios_municipios.id')
+            ->leftJoin('socios_provincias', 'socios_personas.Provincia', '=', 'socios_provincias.id')
+            ->leftJoin('socios_nacionalidad', 'socios_personas.Pais', '=', 'socios_nacionalidad.id')
+            ->select('socios_personas.*','socios_municipios.municipio as nombre_poblacion','socios_provincias.provincia as nombre_provincia','socios_nacionalidad.pais as nombre_pais'
+            );
             
             switch ($modo) {
                 case 'todos_activos':
@@ -248,6 +255,15 @@ class CorrespondenciaController extends BaseController
                     // Socios deudores de baja
                     // $socios = \DB::table('socios_personas')->where('activo', false)->where('deudor', true)->get();
                     $socios = SocioPersona::with(['baja', 'municipio'])->where('deudor', true)->get();
+                break;
+
+                case 'directiva':
+                    $temporadaActual = \DB::table('temporadas')->where('activa', true)->first();
+                    if (!$temporadaActual) {
+                        return $this->sendError('No hay temporada activa', [], 404);
+                    }
+                    $socios = \DB::table('socios_personas')->join('historial_cargos_directivos', 'socios_personas.Id_Persona', '=', 'historial_cargos_directivos.a_persona')
+                    ->where('historial_cargos_directivos.a_temporada', $temporadaActual->id)->select('socios_personas.*')->distinct()->get();
                 break;
                     
                 case 'manual':
